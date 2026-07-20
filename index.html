@@ -1,0 +1,1142 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14171c; --panel:#1b1f26; --panel-2:#20252d; --border:#2b313a;
+    --text:#e8e6e1; --text-dim:#9aa0aa;
+    --amber:#e8a33d; --amber-dim:#8a6224;
+    --teal:#4fb8af; --green-light:#7bcf9e; --green-dark:#2f9e5c;
+    --skip:#6b8fc7; --danger:#c1543c;
+    --p2:#c77dd6;
+  }
+  *{box-sizing:border-box;}
+  .qlog{font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); padding:28px; min-height:100%; max-width:920px; margin:0 auto;}
+  .qlog h1,.qlog h2,.qlog h3{font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.04em; margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* identity gate */
+  .id-gate{max-width:360px; margin:60px auto; text-align:center;}
+  .id-gate h2{font-size:22px; margin-bottom:6px;}
+  .id-gate p{color:var(--text-dim); font-size:13px; margin-bottom:18px;}
+  .id-gate input{width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:12px; font-size:14px; margin-bottom:12px; text-align:center;}
+  .id-gate button{width:100%; background:var(--amber); border:none; color:var(--bg); font-weight:600; border-radius:6px; padding:12px; font-size:14px; cursor:pointer;}
+  .id-gate .switch-note{margin-top:14px; font-size:11px; color:var(--text-dim);}
+
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .undo-bar{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px;}
+  .save-btn{font-weight:600;}
+  .save-btn.status-saved{background:#3fae6a; color:#0c2415; border-color:#3fae6a;}
+  .save-btn.status-error{background:var(--danger); color:#2a0f0a; border-color:var(--danger);}
+  .save-btn.status-saving{opacity:0.7;}
+  .topbar button{background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:4px; padding:4px 9px; cursor:pointer; font-size:11px; font-family:'IBM Plex Mono',monospace;}
+  .topbar button:hover{border-color:var(--amber); color:var(--amber);}
+
+  .rankbar{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:18px 22px; margin-bottom:14px; position:relative; overflow:hidden;}
+  .rankbar::before{content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--amber);}
+  .rank-top{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;}
+  .rank-title{font-size:26px; font-weight:700; color:var(--text);}
+  .rank-sub{font-size:13px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .xp-track{margin-top:14px; height:10px; background:var(--panel-2); border-radius:5px; overflow:hidden; border:1px solid var(--border);}
+  .xp-fill{height:100%; background:linear-gradient(90deg, var(--amber-dim), var(--amber)); transition:width 0.5s ease;}
+  .xp-nums{display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .skip-badge{display:inline-flex; align-items:center; gap:5px; margin-top:10px; font-size:11px; color:var(--skip); font-family:'IBM Plex Mono',monospace;}
+
+  .dual-rank{display:flex; gap:10px; margin-bottom:14px;}
+  .dual-rank .rankbar{flex:1; margin-bottom:0; padding:14px 16px;}
+  .dual-rank .rank-title{font-size:18px;}
+  .dual-rank .rank-name{font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; text-transform:uppercase; margin-bottom:2px;}
+  .dual-rank .rankbar.me::before{background:var(--amber);}
+  .dual-rank .rankbar.other::before{background:var(--p2);}
+  .dual-rank .rankbar.other .xp-fill{background:linear-gradient(90deg, #6b3a72, var(--p2));}
+
+  .perk-banner{background:rgba(232,163,61,0.12); border:1px solid var(--amber-dim); border-radius:6px; padding:12px 16px; margin-bottom:14px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .perk-banner button{background:none;border:1px solid var(--amber-dim);color:var(--amber);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+
+  .goal-card{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:18px 20px; margin-bottom:20px;}
+  .goal-header{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .goal-label{font-size:11px; color:var(--amber); font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em;}
+  .goal-title{font-size:18px; margin-top:4px; color:var(--text);}
+  .goal-edit-btn{background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:4px; padding:4px 10px; font-size:11px; cursor:pointer; font-family:'IBM Plex Mono',monospace; flex-shrink:0;}
+  .goal-edit-btn:hover{border-color:var(--teal); color:var(--teal);}
+  .goal-stats{display:flex; justify-content:space-between; margin-top:14px; font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .big-stat{text-align:center; margin:14px 0; padding:16px; background:var(--panel-2); border-radius:8px;}
+  .big-stat-num{display:block; font-family:'Barlow Condensed',sans-serif; font-size:56px; font-weight:700; line-height:1; color:#3fae6a;}
+  .big-stat-label{display:block; margin-top:4px; font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:0.05em;}
+  .goal-track{height:12px; background:var(--panel-2); border-radius:6px; overflow:hidden; border:1px solid var(--border); margin-top:8px;}
+  .goal-fill{height:100%; background:linear-gradient(90deg, #2f6f68, var(--teal));}
+  .goal-actions{display:flex; gap:8px; margin-top:12px;}
+  .goal-edit-form{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
+  .goal-edit-form input{background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:8px 10px; font-size:13px; font-family:'Inter',sans-serif;}
+  .goal-edit-form label{font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; margin-bottom:2px; display:block;}
+  .pace-note{font-size:12px; margin-top:8px; padding:6px 10px; border-radius:4px; font-family:'IBM Plex Mono',monospace;}
+  .pace-note.ahead{background:rgba(79,184,175,0.12); color:var(--teal);}
+  .pace-note.behind{background:rgba(193,84,60,0.12); color:var(--danger);}
+
+  .section-head{display:flex; justify-content:space-between; align-items:center; margin:26px 0 12px;}
+  .section-head h2{font-size:20px; color:var(--text);}
+  .section-count{font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+
+  .view-switch{display:flex; gap:4px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:4px; margin-bottom:14px;}
+  .view-switch button{flex:1; background:none; border:none; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 6px; border-radius:6px; cursor:pointer;}
+  .view-switch button.active{background:var(--teal); color:#0e2624; font-weight:600;}
+  .readonly-note{font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; margin-bottom:10px; padding:6px 10px; background:var(--panel-2); border-radius:4px; display:inline-block;}
+
+  .shot-row{display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:12px 14px; margin-bottom:8px;}
+  .slate{width:26px; height:26px; border:2px solid var(--amber-dim); border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all 0.15s ease; background:var(--panel-2);}
+  .slate:hover{border-color:var(--amber);}
+  .slate.done{background:var(--amber); border-color:var(--amber);}
+  .slate.done::after{content:'✓'; color:var(--bg); font-weight:700; font-size:15px;}
+  .slate.readonly{cursor:default;}
+  .shot-name{flex:1; font-size:14px;}
+  .shot-name.done{color:var(--text-dim); text-decoration:line-through;}
+  .shot-xp{font-size:11px; color:var(--teal); font-family:'IBM Plex Mono',monospace; white-space:nowrap;}
+  .shot-del{background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; padding:2px 6px; line-height:1;}
+  .shot-del:hover{color:var(--danger);}
+  .task-minutes-input{width:52px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:6px 6px; font-size:12px; font-family:'IBM Plex Mono',monospace; text-align:center;}
+  .task-time-summary{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:10px 0 4px; padding:10px 14px; background:var(--panel); border:1px solid var(--border); border-radius:6px; font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .task-time-summary b{color:var(--text); font-weight:600;}
+
+  .habit-card{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:14px 16px; margin-bottom:10px;}
+  .habit-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .habit-name{font-size:14px; font-weight:500;}
+  .habit-streak{font-size:11px; color:var(--amber); font-family:'IBM Plex Mono',monospace;}
+  .filmstrip{display:flex; gap:3px;}
+  .frame{flex:1; height:22px; border-radius:2px; background:var(--panel-2); border:1px solid var(--border); position:relative;}
+  .frame::before, .frame::after{content:''; position:absolute; left:2px; right:2px; height:2px; background:var(--bg);}
+  .frame::before{top:2px;} .frame::after{bottom:2px;}
+  .frame.lit{background:#3fae6a; border-color:#3fae6a;}
+  .frame.skip{background:var(--skip); border-color:var(--skip);}
+  .frame.miss{background:var(--panel-2); border-color:var(--danger); opacity:0.6;}
+  .subtask-grid{display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;}
+  .subtask-chip{min-width:40px; flex:0 0 auto; padding:8px 9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim); border-radius:5px; font-size:11px; font-family:'IBM Plex Mono',monospace; cursor:pointer; text-align:center;}
+  .subtask-chip.done{background:#3fae6a; border-color:#3fae6a; color:#0c2415; font-weight:600;}
+  .subtask-chip.readonly{cursor:default;}
+
+  .week-nav{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .week-label{font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .week-day-labels{display:flex; gap:3px; margin-bottom:6px;}
+  .week-day-labels span{flex:1; text-align:center; font-size:9px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; line-height:1.4;}
+
+  .date-nav{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .date-nav-current{flex:1; text-align:center; display:flex; flex-direction:column; align-items:center; line-height:1.2;}
+  .date-nav-weekday{font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; font-size:12px; color:var(--amber); letter-spacing:0.05em;}
+  .date-nav-full{font-size:15px; color:var(--text);}
+  .date-nav input[type=date]{background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:6px 8px; font-size:12px; font-family:'IBM Plex Mono',monospace;}
+  .date-chip-row{display:flex; gap:5px; margin-bottom:16px; overflow-x:auto;}
+  .date-chip{flex:1; min-width:52px; background:var(--panel); border:1px solid var(--border); color:var(--text-dim); border-radius:6px; padding:7px 4px; font-size:10px; font-family:'IBM Plex Mono',monospace; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .date-chip span{font-size:13px; color:var(--text); font-weight:600;}
+  .date-chip.active{border-color:var(--amber); background:rgba(232,163,61,0.12); color:var(--amber);}
+  .date-chip.active span{color:var(--amber);}
+
+  .rule-row{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13px;}
+  .rule-tag{font-size:10px; font-family:'IBM Plex Mono',monospace; padding:2px 7px; border-radius:3px; letter-spacing:0.05em; flex-shrink:0;}
+  .rule-tag.reward{background:rgba(79,184,175,0.15); color:var(--teal);}
+  .rule-tag.penalty{background:rgba(193,84,60,0.15); color:var(--danger);}
+
+  .add-row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .add-row input, .add-row select{background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:8px 10px; font-size:13px; font-family:'Inter',sans-serif;}
+  .add-row input[type=text]{flex:1; min-width:140px;}
+  .add-row input[type=number]{width:70px;}
+  .btn{background:var(--amber); border:none; color:var(--bg); font-weight:600; border-radius:4px; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif;}
+  .btn:hover{background:#f0b158;}
+  .btn.ghost{background:none; border:1px solid var(--border); color:var(--text-dim);}
+  .btn.ghost:hover{border-color:var(--teal); color:var(--teal);}
+  .btn.small{padding:5px 10px; font-size:11px;}
+  .btn.teal{background:var(--teal); color:#0e2624;}
+  .btn.teal:hover{background:#63cbc2;}
+  .btn.green{background:#3fae6a; color:#0c2415;}
+  .btn.green:hover{background:#4dc27c;}
+  .btn.skip{background:none;border:1px solid var(--skip);color:var(--skip);}
+  .btn.skip:hover{background:rgba(107,143,199,0.12);}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn.range{padding:4px 10px; font-size:11px; background:none; border:1px solid var(--border); color:var(--text-dim);}
+  .btn.range.active{border-color:var(--amber); color:var(--amber);}
+
+  .empty-note{color:var(--text-dim); font-size:13px; font-style:italic; padding:10px 2px;}
+
+  .chart-card{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:16px 18px; margin-bottom:14px;}
+  .chart-title-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;}
+  .chart-title{font-size:13px; color:var(--text);}
+  .chart-range-toggle{display:flex; gap:4px;}
+  .chart-summary{font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; margin-bottom:10px;}
+  .chart-legend{display:flex; gap:14px; margin-bottom:8px; font-size:11px; font-family:'IBM Plex Mono',monospace;}
+  .chart-legend span{display:flex; align-items:center; gap:5px;}
+  .chart-legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+  .chart-bars{display:flex; align-items:flex-end; gap:4px; height:80px;}
+  .chart-col{flex:1; display:flex; gap:1px; align-items:flex-end; justify-content:center; height:100%;}
+  .chart-bar-el{flex:1; border-radius:2px 2px 0 0; min-height:2px;}
+  .chart-labels{display:flex; gap:4px; margin-top:6px;}
+  .chart-labels span{flex:1; text-align:center; font-size:8px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace;}
+  .chart-teal{background:var(--teal);} .chart-amber{background:var(--amber);} .chart-p2{background:var(--p2);}
+
+  .video-title{font-size:14px; flex:1; min-width:140px;}
+  .video-chevron{color:var(--text-dim); font-size:11px; flex-shrink:0;}
+  .video-notes-preview{font-size:12px; color:var(--text-dim); margin-top:4px; padding-left:18px; font-style:italic;}
+  .video-notes{width:100%; margin-top:10px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; resize:vertical; min-height:80px; line-height:1.5;}
+  .video-card{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:12px 14px; margin-bottom:8px;}
+  .video-card.status-idea{background:rgba(154,160,170,0.14); border:1px solid rgba(154,160,170,0.4);}
+  .video-card.status-shot{background:rgba(232,163,61,0.18); border:1px solid rgba(232,163,61,0.5);}
+  .video-card.status-edited{background:rgba(123,207,158,0.18); border:1px solid rgba(123,207,158,0.5);}
+  .video-card.status-published{background:rgba(47,158,92,0.32); border:1px solid var(--green-dark);}
+  .video-top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .status-pill{font-size:10px; font-family:'IBM Plex Mono',monospace; padding:3px 9px; border-radius:10px; letter-spacing:0.04em; white-space:nowrap;}
+  .status-pill.idea{background:rgba(154,160,170,0.15); color:var(--text-dim);}
+  .status-pill.shot{background:rgba(232,163,61,0.15); color:var(--amber);}
+  .status-pill.edited{background:rgba(123,207,158,0.15); color:var(--green-light);}
+  .status-pill.published{background:rgba(47,158,92,0.22); color:var(--green-dark);}
+  .video-actions{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .platform-row{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
+  .platform-chip{font-size:11px; padding:5px 10px; border-radius:5px; border:1px solid var(--border); background:var(--panel-2); color:var(--text-dim); cursor:pointer; font-family:'Inter',sans-serif;}
+  .platform-chip.active{border-color:var(--teal); color:var(--teal); background:rgba(79,184,175,0.1);}
+  .video-board-summary{display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; font-size:12px; font-family:'IBM Plex Mono',monospace;}
+  .video-board-summary span{padding:6px 12px; border-radius:6px; font-weight:600;}
+  .video-board-summary span.count-idea{background:rgba(154,160,170,0.22); color:var(--text-dim);}
+  .video-board-summary span.count-shot{background:rgba(232,163,61,0.22); color:var(--amber);}
+  .video-board-summary span.count-edited{background:rgba(123,207,158,0.24); color:var(--green-light);}
+  .video-board-summary span.count-published{background:rgba(47,158,92,0.35); color:var(--green-dark);}
+  .readiness-row{display:flex; gap:5px; margin-top:10px; flex-wrap:wrap;}
+  .readiness-chip{flex:1; min-width:110px; padding:7px 8px; border-radius:5px; font-size:11px; font-family:'Inter',sans-serif; cursor:pointer; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim);}
+  .readiness-chip.red{border-color:rgba(193,84,60,0.5);}
+  .readiness-chip.red.active{background:var(--danger); border-color:var(--danger); color:#2a0f0a; font-weight:600;}
+  .readiness-chip.yellow{border-color:rgba(232,163,61,0.5);}
+  .readiness-chip.yellow.active{background:var(--amber); border-color:var(--amber); color:#2a1c05; font-weight:600;}
+  .readiness-chip.green{border-color:rgba(63,174,106,0.5);}
+  .readiness-chip.green.active{background:#3fae6a; border-color:#3fae6a; color:#0c2415; font-weight:600;}
+  .readiness-chip.blue{border-color:rgba(107,143,199,0.5);}
+  .readiness-chip.blue.active{background:var(--skip); border-color:var(--skip); color:#0d1a2e; font-weight:600;}
+
+  .difficulty-input{width:48px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:5px 4px; font-size:11px; font-family:'IBM Plex Mono',monospace; text-align:center;}
+  .sanya-check{display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; color:var(--text-dim); cursor:pointer;}
+  .sanya-check input{cursor:pointer;}
+  .btn.ghost.active-sort{border-color:var(--amber); color:var(--amber);}
+
+  .tab-switch{display:flex; gap:4px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:4px; margin-bottom:20px;}
+  .tab-btn{flex:1; background:none; border:none; color:var(--text-dim); font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.03em; font-size:14px; font-weight:600; padding:9px 8px; border-radius:6px; cursor:pointer; transition:all 0.15s ease;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{background:var(--amber); color:var(--bg);}
+  .date-switch{margin-bottom:14px; padding:3px;}
+  .date-switch .tab-btn{font-size:12px; padding:7px 6px;}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<div class="qlog" id="app"></div>
+
+<script>
+(function(){
+  const RANKS = [
+    {min:0, title:'PA'}, {min:150, title:'Assistant Editor'}, {min:400, title:'Editor'},
+    {min:900, title:'Director'}, {min:1800, title:'Showrunner'}, {min:3200, title:'Auteur'}
+  ];
+  const STATUS_ORDER = ['idea','shot','edited'];
+  const STATUS_LABELS = {idea:'Идея', shot:'Отснято', edited:'Смонтировано'};
+  const PLATFORMS = [
+    {key:'tiktok', label:'TikTok'}, {key:'vk', label:'VK'}, {key:'youtube', label:'YouTube'},
+    {key:'instagram', label:'Instagram'}, {key:'telegram', label:'Telegram'}
+  ];
+  const SEASON_START = '2026-07-20';
+  const SEASON_DEADLINE = '2026-09-14';
+  const SEASON_VERSION = 2;
+  const WEEKDAYS_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const PEOPLE = ['Дима','Саша'];
+  const PEOPLE_LABEL_HABITS = {'Дима':'Привычки Димы', 'Саша':'Привычки Саши'};
+  const PEOPLE_LABEL_TASKS = {'Дима':'Задачи Димы', 'Саша':'Задачи Саши'};
+
+  function todayStr(d){ d = d || new Date(); return new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/Moscow', year:'numeric', month:'2-digit', day:'2-digit'}).format(d); }
+  function addDays(date, n){ return new Date(date.getTime() + n*24*3600*1000); }
+  function lastNDays(n){ const arr=[]; for(let i=n-1;i>=0;i--){ arr.push(todayStr(addDays(new Date(), -i))); } return arr; }
+  function daysBetween(a,b){ return Math.round((new Date(b) - new Date(a)) / 86400000); }
+  function shortLabel(dateStr, showMonth){ const d = new Date(dateStr+'T00:00:00'); return showMonth ? (d.getDate()+'/'+(d.getMonth()+1)) : String(d.getDate()); }
+  function shiftDateStr(dStr, n){
+    const [y,m,d] = dStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m-1, d)); dt.setUTCDate(dt.getUTCDate()+n);
+    return dt.getUTCFullYear()+'-'+String(dt.getUTCMonth()+1).padStart(2,'0')+'-'+String(dt.getUTCDate()).padStart(2,'0');
+  }
+  function weekdayLabel(dStr){ const [y,m,d] = dStr.split('-').map(Number); return WEEKDAYS_RU[new Date(Date.UTC(y,m-1,d)).getUTCDay()]; }
+  function formatRuDate(dStr){ const [y,m,d] = dStr.split('-').map(Number); return d+' '+MONTHS_RU[m-1]; }
+  function uid(){ return 'i'+Math.random().toString(36).slice(2,9); }
+  function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function minutesToHM(m){ m = Math.max(0, Math.round(m||0)); const h = Math.floor(m/60); const mm = m%60; return h+':'+String(mm).padStart(2,'0'); }
+
+  function newPerson(){
+    return { xpTotal:0, lastRankIndex:0, skipTokens:0, habits:[], tasksByDate:{}, log:{}, taskStatsHistory:{}, lastActiveDate: todayStr() };
+  }
+  function newTeam(){
+    return {
+      goal:{ text:'Снять 100 видео', target:100, current:0, deadline:SEASON_DEADLINE, start:SEASON_START },
+      goalHistory:{}, rules:[], videos:[], chartRangeDays:14, seasonVersion:SEASON_VERSION
+    };
+  }
+
+  // fallback snapshot embedded directly in the file, used only if cloud storage is empty
+  const EMBEDDED_BACKUP = {"team": {"goal": {"text": "Снять 100 видео", "target": 100, "current": 1, "deadline": "2026-09-14", "start": "2026-07-20"}, "goalHistory": {"2026-07-15": 0, "2026-07-16": 0, "2026-07-17": 0, "2026-07-19": 1}, "rules": [], "videos": [{"id": "ilocqcmr", "title": "девушка молоко в рот, парень какао", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "Затем я смотрю в шоке в камеру, поворачиваюсь а там Саня льет уже себе молоко в рот и протягивает мне ложку какао, я в шоке сдуваю ложку какао ему в лицо", "readiness": "ready"}, {"id": "i57jo7fn", "title": "бутылка с жидкостью, под ней фишки, игра с детьми", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "кто проиграет, моет полы\nнадо додумать смешную коноцвку", "readiness": "thinking"}, {"id": "iciz7v5q", "title": "человечки на бумаге, 2 квадрата, с детьми", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "если ты отгадаешь, то я мою унитаз, если нет, то ты. в конце игрушечный унитаз", "readiness": "prep"}, {"id": "igs1oo3k", "title": "тарелка с водой на краю стола, тревожность", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "", "readiness": "ready"}, {"id": "ii9bw6ou", "title": "Джинсы завязаные как юбка", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "купить джинсы, купить ватман, сделать юбку из джинс", "readiness": "prep"}, {"id": "i23z894g", "title": "ЭКсперимент Валера Меладзе", "status": "edited", "platforms": {"tiktok": true, "vk": false, "youtube": false, "instagram": true, "telegram": false}, "countedTowardGoal": true, "notes": "", "readiness": "ready"}, {"id": "ie3frsmm", "title": "Открыла машину теннисным мячом", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "", "readiness": "prep"}, {"id": "iwba1qgt", "title": "Кринж готовка с рисом", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "1) кто то готовит медведя из риса и накрывает одеялом из омлета\nя кладу черный поджаренный рис в виде медведя, заливаю его кусок корелого омлета.\n2) видео про болгарский перец для волос, и я выливаю себе на голову его\n3) Я подбрасываю рис, склейка дети полностью в рисе, во рту рис и они говорят с набитым ртом:\n-я наелся", "readiness": "thinking"}, {"id": "iycpffyq", "title": "Проигрыватель из говна и палок + в конце смешной звук проигрывается", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "", "readiness": "thinking"}, {"id": "iy2cnmdl", "title": "играю с детьми в магнитные шарики", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "хук: кто проиграет спит сегодня в подьезде, концовка я сплю в подьезде, на матрасе, лифт открывается реакция соседей (Сани)", "readiness": "ready"}, {"id": "izhd1qx3", "title": "мини стендап про то как я снимал рекламу, упал, разлил, и забыл снять", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "история как я чуть не расплакался, короче мне надо было снять ролик, в котором я якобы обжигаюсь, наступаю на тазик с водой, и падаю переворачивая его. я подготовился, выставил штатив, кадр, потом я начал лить воду в тазик и так натурально все отыграл, что реально очень больно долбанулся, вскричал от боли, залил всю кухню водой, были смешанные чувства с одной стороны больно, а с другой получилось максимально натурально. и тут я поднимаю голову и вижу...что я забыл нажать на кнопку сьемки. я ничего не снял!! а значит сейчас, мне надо убирать всю кухню, а потом снимать тоже самое, еще раз так же обжигаться и падать, а потом еще раз убирать всю кухню. ", "readiness": "thinking"}, {"id": "ib49vmvu", "title": "Фокус со стаканом и монетой обоим детям", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "Додумать хук и концовку", "readiness": "thinking"}, {"id": "id0btjnd", "title": "Мое лицо на жидком мыле и салкетках", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "додумать концовку и подготовить реквизит", "readiness": "thinking"}, {"id": "i75vs6ec", "title": "сравнение реакций детей если я сьем втихоря их еду", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "надо додумать смешную концовку", "readiness": "thinking"}, {"id": "ilh7trxf", "title": "бьют в ресторане пирог, а потом роняют", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "затем я у детей спрашиваю, хотите поесть как в ресторане, они такие: даааа! затем я делаю тоже самое их реакция. затем можно вставить кадры из 2-х других роликов из ресторанов, и я так же повторяю это перед детьми\n\nРеквизит: пирог, пюре", "readiness": "prep"}, {"id": "ichsxuzm", "title": "Из ложки делают морковкочистку", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "реквизит: морковь, хлеб, маркер, морковкачистка\n\nЧистка морковки ложкой, потом дуршлагом тру морковку, потом ем её овощеочисткой на улице на глазах у людей", "readiness": "prep"}, {"id": "i7mm9thx", "title": "ведро со сливками в лицо", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "", "readiness": "prep"}, {"id": "ikpjdu35", "title": "дезодарант из помидора", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "я делаю такой пользуюсь им в людном месте, снимаем реакцию людей, так же для рзавития можно сделать из огурца и тд", "readiness": "prep"}, {"id": "ifulr8wk", "title": "Женщина вместо глаз яйца", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "я вижу сколько просмотров, делаю так же и хожу по улице, снимаем реакции людей, можно  в конце типа я упал куда то потому что нифига не видно", "readiness": "thinking"}, {"id": "ijle1mha", "title": "Лайфхак как вскрыть кодовый замок", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "я пытаюсь повторить на улице с каким то кодовым замком, полицейский идёт ко мне", "readiness": "thinking"}, {"id": "ii52n4tx", "title": "На улице давать бумажку типа записку прохожему", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "и снимать его реакцию показывая что было в бумажке типа «у тебя все будет заебись»", "readiness": "thinking"}, {"id": "itapw4u7", "title": "Купить длинную выдвижную ложку и пытаться с чужих столов тырить еду на фуд-корте", "status": "idea", "platforms": {"tiktok": false, "vk": false, "youtube": false, "instagram": false, "telegram": false}, "countedTowardGoal": false, "notes": "", "readiness": "prep"}], "chartRangeDays": 14, "seasonVersion": 2}, "people": {"Дима": {"xpTotal": 160, "lastRankIndex": 1, "skipTokens": 1, "habits": [{"id": "ik6w38gn", "name": "Телефон не больше 20 минут", "xp": 20, "subtasks": ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "0:00", "1:00", "2:00"]}, {"id": "ilk5n86o", "name": "Тренировка, от 4 подходов", "xp": 10, "subtasks": ["Подход 1", "Подход 2", "Подход 3", "Подход 4"]}, {"id": "i8tieegc", "name": "Написал план и отчет за день", "xp": 10, "subtasks": ["План", "Отчёт"]}], "tasksByDate": {"2026-07-16": [{"id": "icbb2mti", "name": "сьездить по заграннику", "xp": 10, "done": true}, {"id": "ip7e90hs", "name": "сделать игру в клоуд для моей продуктивности", "xp": 10, "done": true}, {"id": "ib1c7dx3", "name": "придумать идею рекламы Яндекс Безопасность", "xp": 10, "done": true}, {"id": "ihlexluj", "name": "Внести правки в ролик Яндекс Браузер", "xp": 10, "done": true}, {"id": "i7qh429g", "name": "выписать 10 идей для видео", "xp": 10, "done": true}, {"id": "i1qlstsl", "name": "провести час без телефона с блокнотом придумывая новые идеи", "xp": 10, "done": true}, {"id": "ixrdb0g2", "name": "Доделать ролик Яндекс Браузер который пришлет Дима", "xp": 10, "done": true}, {"id": "i9sdstg7", "name": "сделать треню", "xp": 10, "done": true}], "2026-07-17": [{"id": "iq6wmqrx", "name": "подготовить все к сьемке видео про Валеру меладзе", "xp": 10, "done": true, "minutes": 30}, {"id": "igi7b7cq", "name": "снять видео про меладзе", "xp": 10, "done": true, "minutes": 30}, {"id": "i4ytrizd", "name": "подготовить все к сьемке про магнитные шарики", "xp": 10, "done": false, "minutes": 30}, {"id": "iqirvt43", "name": "снять видео про магнитные шарики", "xp": 10, "done": false, "minutes": 30}, {"id": "iq01n7nc", "name": "доснять в подьезде концовку для магнитных шариков", "xp": 10, "done": false, "minutes": 26}, {"id": "ibyytgbc", "name": "отправить на монтаж диме материал про магнитные шарики", "xp": 10, "done": false, "minutes": 28}, {"id": "il1v0dqo", "name": "смонтировать видео про Валеру меладзе", "xp": 10, "done": false, "minutes": 60}, {"id": "iwh75zbp", "name": "сделать треню", "xp": 10, "done": true, "minutes": 30}, {"id": "ivimlurr", "name": "провести час без телефона с блокнотом", "xp": 10, "done": false, "minutes": 56}, {"id": "iav2oj1b", "name": "добавить все новые идеи в список", "xp": 10, "done": false, "minutes": 20}, {"id": "iq5tucwg", "name": "додумать то что надо для 2х идей", "xp": 10, "done": false, "minutes": 30}, {"id": "ikfcd1lr", "name": "собрать вещи для поездки", "xp": 10, "done": false, "minutes": 40}, {"id": "iensxf8n", "name": "внести правки в сценарий Яндекс безопасность который пришлет Саня", "xp": 10, "done": true, "minutes": 30}, {"id": "i4iznbud", "name": "Сдать описание Яндекс Браузера", "xp": 10, "done": true}, {"id": "ia4jhody", "name": "ответить монтажерам в директе", "xp": 10, "done": false, "minutes": 20}, {"id": "iliik5ff", "name": "выложить видео в ютуб которое обрезал рекламную часть и не выложил еще", "xp": 10, "done": true, "minutes": 15}, {"id": "ixvvzvcw", "name": "выложить что то в телеграм", "xp": 10, "done": false, "minutes": 15}, {"id": "i4myl4cj", "name": "если холодильник не починится, вызывать мастера", "xp": 10, "done": true, "minutes": 40}]}, "log": {"2026-07-16": {"ilk5n86o": [false, false, false, false], "i8tieegc": [false, false], "ik6w38gn": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]}, "2026-07-17": {"ilk5n86o": [true, true, true, true], "ik6w38gn": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "i8tieegc": [false, false]}}, "taskStatsHistory": {"2026-07-16": {"total": 10, "done": 8, "plannedMin": 0, "doneMin": 0}}, "lastActiveDate": "2026-07-15"}}};
+
+  // ==== Firebase config — paste your own project's values here ====
+  // Get these from: Firebase Console -> Project Settings -> General -> "Your apps" -> Web app -> firebaseConfig
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDGlBZzchF0hQvLIBwtWOyaDjVhpE-1Op4",
+    authDomain: "treker-9b58c.firebaseapp.com",
+    projectId: "treker-9b58c",
+    storageBucket: "treker-9b58c.firebasestorage.app",
+    messagingSenderId: "858788149059",
+    appId: "1:858788149059:web:700fcfe2b46d2b21dae1f6"
+  };
+  const FIRESTORE_COLLECTION = 'quest-log';
+
+  let db = null;
+  let firebaseReady = false;
+  function initFirebase(){
+    try{
+      if(FIREBASE_CONFIG.apiKey === "ВСТАВЬ_СЮДА") return false; // not configured yet
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+      firebaseReady = true;
+      return true;
+    }catch(e){ console.error('Firebase init failed', e); return false; }
+  }
+  async function cloudGet(id){
+    if(!db) throw new Error('firebase not configured');
+    const docSnap = await db.collection(FIRESTORE_COLLECTION).doc(id).get();
+    if(!docSnap.exists) throw new Error('not found: '+id);
+    return docSnap.data().value;
+  }
+  async function cloudSet(id, value){
+    if(!db) throw new Error('firebase not configured');
+    await db.collection(FIRESTORE_COLLECTION).doc(id).set({ value, updatedAt: Date.now() });
+  }
+
+  let state = { team:newTeam(), people:{} };
+  let loaded = false;
+  let dismissedPerk = true;
+  let perkForName = null;
+  let editingGoal = false;
+  let activeTab = 'habits';
+  let habitWeekIndex = null;
+  let viewingWhoHabits = 'Дима';
+  let selectedTaskDate = todayStr();
+  let viewingWhoTasks = 'Дима';
+  let videoSubTab = 'todo';
+  let videoSortMode = 'readiness';
+  let expandedVideos = new Set();
+  let undoStack = [];
+  const UNDO_LIMIT = 25;
+
+  const app = document.getElementById('app');
+
+  function enforceSeasonVersion(){
+    if(state.team.seasonVersion !== SEASON_VERSION){
+      state.team.goal.start = SEASON_START;
+      state.team.goal.deadline = SEASON_DEADLINE;
+      state.team.seasonVersion = SEASON_VERSION;
+    }
+  }
+  const XP_RESET_VERSION = 1;
+  function enforceXpReset(){
+    const p = state.people['Дима'];
+    if(p && p.xpResetVersion !== XP_RESET_VERSION){
+      p.xpTotal = 0;
+      p.lastRankIndex = 0;
+      p.skipTokens = 0;
+      p.xpResetVersion = XP_RESET_VERSION;
+    }
+  }
+
+  async function init(){
+    initFirebase();
+    try{
+      const teamVal = await cloudGet('team');
+      state.team = Object.assign(newTeam(), JSON.parse(teamVal));
+    }catch(e){ state.team = Object.assign(newTeam(), JSON.parse(JSON.stringify(EMBEDDED_BACKUP.team))); }
+    enforceSeasonVersion();
+    state.team.videos.forEach(normalizeVideo);
+
+    for(const name of PEOPLE){
+      try{
+        const pVal = await cloudGet('person-'+name);
+        state.people[name] = Object.assign(newPerson(), JSON.parse(pVal));
+      }catch(e){
+        state.people[name] = EMBEDDED_BACKUP.people[name] ? Object.assign(newPerson(), JSON.parse(JSON.stringify(EMBEDDED_BACKUP.people[name]))) : newPerson();
+      }
+    }
+    enforceXpReset();
+
+    PEOPLE.forEach(rollOverPerson);
+    if(!state.team.goalHistory[todayStr()]) state.team.goalHistory[todayStr()] = state.team.goal.current;
+
+    loaded = true;
+    saveTeam();
+    PEOPLE.forEach(savePerson);
+    render();
+  }
+
+  function rollOverPerson(name){
+    const p = state.people[name];
+    const today = todayStr();
+    let changed = true;
+    while(changed){
+      changed = false;
+      const pastDates = Object.keys(p.tasksByDate).filter(d => d < today && !p.taskStatsHistory[d]).sort();
+      for(const d of pastDates){
+        const list = p.tasksByDate[d] || [];
+        p.taskStatsHistory[d] = {
+          total: list.length, done: list.filter(t=>t.done).length,
+          plannedMin: list.reduce((s,t)=>s+(t.minutes||0),0),
+          doneMin: list.filter(t=>t.done).reduce((s,t)=>s+(t.minutes||0),0)
+        };
+        const incomplete = list.filter(t=>!t.done);
+        if(incomplete.length){
+          const nd = shiftDateStr(d, 1);
+          if(!p.tasksByDate[nd]) p.tasksByDate[nd] = [];
+          p.tasksByDate[nd] = p.tasksByDate[nd].concat(incomplete);
+        }
+        p.tasksByDate[d] = list.filter(t=>t.done);
+        changed = true;
+      }
+    }
+    p.lastActiveDate = today;
+  }
+
+  function pushUndo(){
+    try{
+      undoStack.push(JSON.stringify({team: state.team, people: state.people}));
+      if(undoStack.length > UNDO_LIMIT) undoStack.shift();
+    }catch(e){ console.error('undo snapshot failed', e); }
+  }
+  function undo(){
+    if(undoStack.length === 0) return;
+    const prev = JSON.parse(undoStack.pop());
+    state.team = prev.team;
+    state.people = prev.people;
+    saveTeam();
+    PEOPLE.forEach(savePerson);
+    render();
+  }
+  function saveTeam(){
+    cloudSet('team', JSON.stringify(state.team)).catch(e=>console.error('team save failed', e));
+  }
+  function savePerson(name){
+    cloudSet('person-'+name, JSON.stringify(state.people[name])).catch(e=>console.error('person save failed', e));
+  }
+  let saveStatus = null; // null | 'saving' | 'saved' | 'error'
+  async function manualSave(){
+    saveStatus = 'saving'; render();
+    try{
+      await cloudSet('team', JSON.stringify(state.team));
+      for(const name of PEOPLE){ await cloudSet('person-'+name, JSON.stringify(state.people[name])); }
+      saveStatus = 'saved';
+    }catch(e){ console.error('manual save failed', e); saveStatus = 'error'; }
+    render();
+    setTimeout(()=>{ saveStatus = null; render(); }, 2500);
+  }
+
+  function xpForRank(rank){ const idx = RANKS.indexOf(rank); return idx < RANKS.length-1 ? RANKS[idx+1].min : rank.min + 1; }
+  function rankIndexFor(xp){ let idx=0; RANKS.forEach((rk,i)=>{ if(xp>=rk.min) idx=i; }); return idx; }
+  function checkRankUp(name){
+    const p = state.people[name];
+    const idx = rankIndexFor(p.xpTotal);
+    if(idx > p.lastRankIndex){ p.skipTokens += (idx - p.lastRankIndex); p.lastRankIndex = idx; dismissedPerk = false; perkForName = name; }
+  }
+
+  // ---------- tasks ----------
+  function getTasksForDate(name, dateStr){
+    const p = state.people[name];
+    if(!p.tasksByDate[dateStr]) p.tasksByDate[dateStr] = [];
+    return p.tasksByDate[dateStr];
+  }
+  function toggleTask(name, dateStr, id){
+    pushUndo();
+    const list = getTasksForDate(name, dateStr);
+    const t = list.find(x=>x.id===id);
+    if(!t) return;
+    const p = state.people[name];
+    if(t.done){ t.done=false; p.xpTotal -= t.xp; } else { t.done=true; p.xpTotal += t.xp; }
+    if(p.xpTotal<0) p.xpTotal=0;
+    checkRankUp(name); savePerson(name); render();
+  }
+  function removeTask(name, dateStr, id){
+    pushUndo();
+    const list = getTasksForDate(name, dateStr);
+    const t = list.find(x=>x.id===id);
+    const p = state.people[name];
+    if(t && t.done) p.xpTotal = Math.max(0, p.xpTotal - t.xp);
+    p.tasksByDate[dateStr] = list.filter(x=>x.id!==id);
+    savePerson(name); render();
+  }
+  function addTask(name, dateStr, taskName, xp, minutes){
+    pushUndo();
+    if(!taskName.trim()) return;
+    getTasksForDate(name, dateStr).push({id:uid(), name:taskName.trim(), xp:xp||10, done:false, minutes:minutes||0});
+    savePerson(name); render();
+  }
+  function setTaskMinutes(name, dateStr, id, value){
+    pushUndo();
+    const list = getTasksForDate(name, dateStr);
+    const t = list.find(x=>x.id===id);
+    if(!t) return;
+    t.minutes = Math.max(0, parseInt(value)||0);
+    savePerson(name); render();
+  }
+
+  // ---------- habits ----------
+  function habitDayState(v){
+    if(v === 'skip') return 'skip';
+    if(Array.isArray(v)) return (v.length>0 && v.every(x=>x));
+    return v === true;
+  }
+  function toggleHabitToday(name, id){
+    pushUndo();
+    const day = todayStr();
+    const p = state.people[name];
+    if(!p.log[day]) p.log[day] = {};
+    const h = p.habits.find(x=>x.id===id);
+    if(!h) return;
+    const cur = p.log[day][id];
+    if(cur === true){ p.log[day][id] = false; p.xpTotal = Math.max(0, p.xpTotal - h.xp); }
+    else { p.xpTotal += h.xp; p.log[day][id] = true; }
+    checkRankUp(name); savePerson(name); render();
+  }
+  function toggleSubtask(name, habitId, index){
+    pushUndo();
+    const p = state.people[name];
+    const h = p.habits.find(x=>x.id===habitId);
+    if(!h || !h.subtasks) return;
+    const day = todayStr();
+    if(!p.log[day]) p.log[day] = {};
+    let arr = Array.isArray(p.log[day][habitId]) ? p.log[day][habitId].slice() : h.subtasks.map(()=>false);
+    const wasAllDone = arr.length>0 && arr.every(x=>x);
+    arr[index] = !arr[index];
+    p.log[day][habitId] = arr;
+    const nowAllDone = arr.every(x=>x);
+    if(!wasAllDone && nowAllDone){ p.xpTotal += h.xp; checkRankUp(name); }
+    else if(wasAllDone && !nowAllDone){ p.xpTotal = Math.max(0, p.xpTotal - h.xp); }
+    savePerson(name); render();
+  }
+  function resetSubtasks(name, habitId){
+    pushUndo();
+    const p = state.people[name];
+    const h = p.habits.find(x=>x.id===habitId);
+    if(!h || !h.subtasks) return;
+    const day = todayStr();
+    const arr = p.log[day] && p.log[day][habitId];
+    if(Array.isArray(arr) && arr.length>0 && arr.every(x=>x)){ p.xpTotal = Math.max(0, p.xpTotal - h.xp); }
+    if(p.log[day]) p.log[day][habitId] = h.subtasks.map(()=>false);
+    savePerson(name); render();
+  }
+  function useSkipToken(name, id){
+    pushUndo();
+    const p = state.people[name];
+    if(p.skipTokens <= 0) return;
+    const day = todayStr();
+    if(!p.log[day]) p.log[day] = {};
+    p.log[day][id] = 'skip';
+    p.skipTokens -= 1;
+    savePerson(name); render();
+  }
+  function addHabit(name, habitName, xp, subtasksStr){
+    pushUndo();
+    if(!habitName.trim()) return;
+    const subtasks = (subtasksStr && subtasksStr.trim()) ? subtasksStr.split(',').map(s=>s.trim()).filter(Boolean) : null;
+    state.people[name].habits.push({id:uid(), name:habitName.trim(), xp:xp||15, subtasks});
+    savePerson(name); render();
+  }
+  function removeHabit(name, id){
+    pushUndo();
+    const p = state.people[name];
+    p.habits = p.habits.filter(x=>x.id!==id);
+    savePerson(name); render();
+  }
+  function streakFor(person, habitId){
+    let streak = 0;
+    const days = lastNDays(90).reverse();
+    for(const d of days){
+      const v = person.log[d] && person.log[d][habitId];
+      const s = habitDayState(v);
+      if(s === true || s === 'skip') streak++; else break;
+    }
+    return streak;
+  }
+  function totalHabitWeeks(){ const totalSpan = Math.max(1, daysBetween(state.team.goal.start, state.team.goal.deadline)); return Math.max(1, Math.ceil(totalSpan/7)); }
+  function currentHabitWeekIndex(){ const offset = Math.max(0, daysBetween(state.team.goal.start, todayStr())); return Math.floor(offset/7); }
+  function shiftHabitWeek(delta){
+    if(habitWeekIndex === null) habitWeekIndex = currentHabitWeekIndex();
+    habitWeekIndex = Math.max(0, Math.min(habitWeekIndex + delta, totalHabitWeeks()-1));
+    render();
+  }
+
+  // ---------- rules (shared) ----------
+  function addRule(type, text){ if(!text.trim()) return; pushUndo(); state.team.rules.push({id:uid(), type, text:text.trim()}); saveTeam(); render(); }
+  function removeRule(id){ pushUndo(); state.team.rules = state.team.rules.filter(r=>r.id!==id); saveTeam(); render(); }
+
+  // ---------- videos (shared) ----------
+  function emptyReadiness(){ return {thinking:false, prep:false, needsSanya:false, ready:false}; }
+  function normalizeVideo(v){
+    if(!v.readiness || typeof v.readiness !== 'object'){
+      const old = v.readiness;
+      v.readiness = emptyReadiness();
+      if(old === 'thinking' || old === 'prep' || old === 'ready') v.readiness[old] = true;
+    }
+    if(typeof v.withSanya !== 'boolean') v.withSanya = false;
+    if(typeof v.difficulty === 'undefined') v.difficulty = null;
+    return v;
+  }
+  function addVideo(title){
+    pushUndo();
+    if(!title.trim()) return;
+    state.team.videos.push({ id:uid(), title:title.trim(), status:'idea',
+      platforms:{tiktok:false,vk:false,youtube:false,instagram:false,telegram:false},
+      countedTowardGoal:false, notes:'', readiness:emptyReadiness(), withSanya:false, difficulty:null });
+    saveTeam(); render();
+  }
+  function toggleReadinessFlag(id, key){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    normalizeVideo(v);
+    v.readiness[key] = !v.readiness[key];
+    saveTeam(); render();
+  }
+  function toggleWithSanya(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    v.withSanya = !v.withSanya;
+    saveTeam(); render();
+  }
+  function setVideoDifficulty(id, value){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    const n = parseInt(value);
+    v.difficulty = (isNaN(n) ? null : Math.max(1, Math.min(10, n)));
+    saveTeam(); render();
+  }
+  function updateGoalCurrent(delta){
+    const g = state.team.goal;
+    g.current = Math.max(0, Math.min(g.target || 999999, (g.current||0) + delta));
+    state.team.goalHistory[todayStr()] = g.current;
+  }
+  function advanceVideo(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    const idx = STATUS_ORDER.indexOf(v.status);
+    if(idx < STATUS_ORDER.length-1){
+      v.status = STATUS_ORDER[idx+1];
+      if(v.status === 'edited' && !v.countedTowardGoal){ v.countedTowardGoal = true; updateGoalCurrent(1); }
+    }
+    saveTeam(); render();
+  }
+  function revertVideo(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    const idx = STATUS_ORDER.indexOf(v.status);
+    if(idx > 0){
+      const wasEdited = v.status === 'edited';
+      v.status = STATUS_ORDER[idx-1];
+      if(wasEdited && v.countedTowardGoal){ v.countedTowardGoal = false; updateGoalCurrent(-1); }
+    }
+    saveTeam(); render();
+  }
+  function togglePlatform(id, key){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id);
+    if(!v || v.status !== 'edited') return;
+    v.platforms[key] = !v.platforms[key];
+    saveTeam(); render();
+  }
+  function removeVideo(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id);
+    if(v && v.countedTowardGoal) updateGoalCurrent(-1);
+    state.team.videos = state.team.videos.filter(x=>x.id!==id);
+    saveTeam(); render();
+  }
+  function toggleVideoExpand(id){ if(expandedVideos.has(id)) expandedVideos.delete(id); else expandedVideos.add(id); render(); }
+  function updateVideoNotes(id, value){ const v = state.team.videos.find(x=>x.id===id); if(v) v.notes = value; }
+  function persistVideoNotes(){ saveTeam(); }
+
+  function saveGoalForm(){
+    pushUndo();
+    const text = document.getElementById('goalTextInput').value;
+    const target = parseInt(document.getElementById('goalTargetInput').value) || 0;
+    const current = parseInt(document.getElementById('goalCurrentInput').value) || 0;
+    const start = document.getElementById('goalStartInput').value;
+    const deadline = document.getElementById('goalDeadlineInput').value;
+    state.team.goal = { text, target, current, deadline: deadline || state.team.goal.deadline, start: start || state.team.goal.start };
+    state.team.goalHistory[todayStr()] = current;
+    editingGoal = false;
+    saveTeam(); render();
+  }
+  function setChartRange(n){ state.team.chartRangeDays = n; saveTeam(); render(); }
+
+  function seasonChartDays(maxRange){
+    const start = state.team.goal.start;
+    const today = todayStr();
+    const end = today > start ? today : start;
+    const endOffset = daysBetween(start, end);
+    const totalElapsed = endOffset + 1;
+    const count = Math.min(maxRange, totalElapsed);
+    const startOffset = Math.max(0, endOffset - count + 1);
+    const days = [];
+    for(let off = startOffset; off <= endOffset; off++){ days.push(shiftDateStr(start, off)); }
+    return days;
+  }
+
+  function buildBarChart(days, seriesArr, maxVal){
+    maxVal = maxVal || Math.max(1, ...seriesArr.flatMap(s=>s.values));
+    const showMonth = days.length > 20;
+    const skipLabel = days.length > 30 ? 3 : (days.length > 14 ? 2 : 1);
+    let bars = '', labels = '';
+    days.forEach((d,i)=>{
+      let cols = '';
+      seriesArr.forEach(s=>{
+        const v = s.values[i];
+        const h = Math.max(2, Math.round((v/maxVal)*100));
+        cols += '<div class="chart-bar-el '+s.colorClass+'" style="height:'+h+'%" title="'+d+' ('+s.label+'): '+(s.format?s.format(v):v)+'"></div>';
+      });
+      bars += '<div class="chart-col">'+cols+'</div>';
+      labels += '<span>'+((i % skipLabel === 0) ? shortLabel(d, showMonth) : '')+'</span>';
+    });
+    return '<div class="chart-bars">'+bars+'</div><div class="chart-labels">'+labels+'</div>';
+  }
+
+  function buildGoalPaceSVG(goal, history){
+    const totalDays = Math.max(1, daysBetween(goal.start, goal.deadline));
+    const elapsed = Math.max(0, Math.min(totalDays, daysBetween(goal.start, todayStr())));
+    const W = 600, H = 140, PAD = 8;
+    const target = Math.max(1, goal.target);
+    function xFor(dayIdx){ return PAD + (dayIdx/totalDays) * (W - PAD*2); }
+    function yFor(val){ return H - PAD - (Math.min(val,target)/target) * (H - PAD*2); }
+    const idealLine = 'M '+xFor(0)+' '+yFor(0)+' L '+xFor(totalDays)+' '+yFor(target);
+    const points = Object.keys(history).sort().map(d=>({idx: daysBetween(goal.start, d), val: history[d]})).filter(p=>p.idx>=0 && p.idx<=totalDays);
+    let actualPath = '';
+    points.forEach((p,i)=>{ actualPath += (i===0?'M ':'L ') + xFor(p.idx) + ' ' + yFor(p.val) + ' '; });
+    let svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%; height:120px;">';
+    svg += '<path d="'+idealLine+'" stroke="#4a5058" stroke-width="2" stroke-dasharray="4,4" fill="none"/>';
+    if(actualPath) svg += '<path d="'+actualPath+'" stroke="var(--teal)" stroke-width="2.5" fill="none"/>';
+    points.forEach(p=>{ svg += '<circle cx="'+xFor(p.idx)+'" cy="'+yFor(p.val)+'" r="3" fill="var(--teal)"/>'; });
+    const curX = xFor(elapsed), curY = yFor(goal.current);
+    svg += '<circle cx="'+curX+'" cy="'+curY+'" r="5" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>';
+    svg += '</svg>';
+    return svg;
+  }
+
+  function personHabitPct(person, day){
+    const total = person.habits.length;
+    if(total===0) return 0;
+    let done = 0;
+    person.habits.forEach(h=>{ const v = person.log[day] && person.log[day][h.id]; const s = habitDayState(v); if(s===true||s==='skip') done++; });
+    return Math.round((done/total)*100);
+  }
+  function personTaskMinutes(person, day){
+    if(person.taskStatsHistory[day]) return person.taskStatsHistory[day].doneMin || 0;
+    const list = person.tasksByDate[day] || [];
+    return list.filter(t=>t.done).reduce((s,t)=>s+(t.minutes||0),0);
+  }
+
+  function render(){
+    if(!loaded){ app.innerHTML = '<div class="empty-note">Загрузка…</div>'; return; }
+
+    let html = '';
+
+    const saveLabel = saveStatus==='saving' ? 'Сохранение…' : (saveStatus==='saved' ? 'Сохранено ✓' : (saveStatus==='error' ? 'Ошибка ✗ — повторить' : 'Сохранить'));
+    const saveClass = saveStatus==='saved' ? 'status-saved' : (saveStatus==='error' ? 'status-error' : (saveStatus==='saving' ? 'status-saving' : ''));
+    if(!firebaseReady){
+      html += '<div class="perk-banner" style="border-color:var(--danger); background:rgba(193,84,60,0.12);"><div>⚠️ Firebase не настроен — вставь конфиг в код (FIREBASE_CONFIG). Сейчас трекер работает только со встроенным резервным снимком, без сохранения.</div></div>';
+    }
+
+    html += '<div class="undo-bar"><button class="btn ghost small" '+(undoStack.length===0?'disabled':'')+' onclick="Quest.undo()">↶ отменить последнее действие</button><button class="btn ghost small save-btn '+saveClass+'" '+(saveStatus==='saving'?'disabled':'')+' onclick="Quest.manualSave()">'+saveLabel+'</button></div>';
+
+    if(perkForName && !dismissedPerk){
+      const p = state.people[perkForName];
+      const rank = RANKS[rankIndexFor(p.xpTotal)];
+      html += '<div class="perk-banner"><div>🎬 <strong>'+escapeHtml(perkForName)+' — новый ранг: '+rank.title+'!</strong> Начислен скип-токен.</div><button onclick="Quest.dismissPerk()">ок</button></div>';
+    }
+
+    html += '<div class="dual-rank">';
+    PEOPLE.forEach((n,i)=>{
+      const person = state.people[n];
+      const rIdx = rankIndexFor(person.xpTotal);
+      const r = RANKS[rIdx];
+      const nxp = xpForRank(r);
+      let pc = Math.round((person.xpTotal - r.min) / (nxp - r.min) * 100);
+      if(!isFinite(pc)) pc = 0; pc = Math.max(0, Math.min(100, pc));
+      html += '<div class="rankbar '+(i===0?'me':'other')+'"><div class="rank-name">'+escapeHtml(n)+'</div><div class="rank-title">'+r.title+'</div><div class="xp-track"><div class="xp-fill" style="width:'+pc+'%"></div></div><div class="xp-nums"><span>'+person.xpTotal+' XP</span><span>до след. — '+nxp+'</span></div><div class="skip-badge">🎟 '+person.skipTokens+'</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tab-switch">'+
+      '<button class="tab-btn '+(activeTab==='habits'?'active':'')+'" onclick="Quest.setTab(\'habits\')">Привычки</button>'+
+      '<button class="tab-btn '+(activeTab==='tasks'?'active':'')+'" onclick="Quest.setTab(\'tasks\')">Задачи</button>'+
+      '<button class="tab-btn '+(activeTab==='ideas'?'active':'')+'" onclick="Quest.setTab(\'ideas\')">Идеи роликов</button>'+
+      '<button class="tab-btn '+(activeTab==='overview'?'active':'')+'" onclick="Quest.setTab(\'overview\')">Статистика</button>'+
+    '</div>';
+
+    // ---------- TAB: habits ----------
+    let habitsHtml = '';
+    habitsHtml += '<div class="view-switch">'+PEOPLE.map(n=>'<button class="'+(viewingWhoHabits===n?'active':'')+'" onclick="Quest.setViewHabits(\''+n+'\')">'+PEOPLE_LABEL_HABITS[n]+'</button>').join('')+'</div>';
+    const habitPerson = state.people[viewingWhoHabits];
+    habitsHtml += '<div class="section-head"><h2>'+PEOPLE_LABEL_HABITS[viewingWhoHabits]+'</h2><span class="section-count mono">'+habitPerson.habits.length+'</span></div>';
+    if(todayStr() < state.team.goal.start){
+      habitsHtml += '<div class="empty-note">Сезон стартует '+formatRuDate(state.team.goal.start)+' — до этого дня отметка «готово сегодня» засчитывается, но не будет видна на плёнке ниже, пока не начнётся сезон.</div>';
+    }
+    if(habitPerson.habits.length===0){ habitsHtml += '<div class="empty-note">Пока нет привычек — добавь первую ниже</div>'; }
+    else {
+      if(habitWeekIndex === null) habitWeekIndex = currentHabitWeekIndex();
+      const totalWeeks = totalHabitWeeks();
+      habitWeekIndex = Math.max(0, Math.min(habitWeekIndex, totalWeeks-1));
+      const weekDays = [];
+      for(let i=0;i<7;i++){ weekDays.push(shiftDateStr(state.team.goal.start, habitWeekIndex*7 + i)); }
+
+      habitsHtml += '<div class="week-nav">';
+      habitsHtml += habitWeekIndex>0 ? '<button class="btn ghost small" onclick="Quest.shiftHabitWeek(-1)">← пред. неделя</button>' : '<span></span>';
+      habitsHtml += '<span class="week-label">'+formatRuDate(weekDays[0])+' – '+formatRuDate(weekDays[6])+'</span>';
+      habitsHtml += habitWeekIndex<totalWeeks-1 ? '<button class="btn ghost small" onclick="Quest.shiftHabitWeek(1)">след. неделя →</button>' : '<span></span>';
+      habitsHtml += '</div>';
+      habitsHtml += '<div class="week-day-labels">'+weekDays.map(d=>'<span>'+weekdayLabel(d)+'<br>'+shortLabel(d)+'</span>').join('')+'</div>';
+
+      const day = todayStr();
+      habitPerson.habits.forEach(h=>{
+        const rawToday = habitPerson.log[day] && habitPerson.log[day][h.id];
+        const todayState = habitDayState(rawToday);
+        const doneToday = todayState === true;
+        const skippedToday = todayState === 'skip';
+        let frames = '';
+        weekDays.forEach(d=>{
+          const v = habitPerson.log[d] && habitPerson.log[d][h.id];
+          const s = habitDayState(v);
+          const isPast = d < day;
+          let cls = 'frame';
+          if(s === true) cls += ' lit'; else if(s === 'skip') cls += ' skip'; else if(isPast) cls += ' miss';
+          frames += '<div class="'+cls+'"></div>';
+        });
+        habitsHtml += '<div class="habit-card"><div class="habit-top"><div class="habit-name">'+escapeHtml(h.name)+'</div><div class="habit-streak">🔥 '+streakFor(habitPerson, h.id)+' дн.</div></div><div class="filmstrip">'+frames+'</div>';
+
+        if(h.subtasks && h.subtasks.length){
+          const arr = Array.isArray(rawToday) ? rawToday : h.subtasks.map(()=>false);
+          habitsHtml += '<div class="subtask-grid">'+h.subtasks.map((label,i)=>
+            '<button class="subtask-chip '+(arr[i]?'done':'')+'" onclick="Quest.toggleSubtask(\''+viewingWhoHabits+'\',\''+h.id+'\','+i+')">'+escapeHtml(label)+'</button>'
+          ).join('')+'</div>';
+          if(doneToday) habitsHtml += '<div class="empty-note" style="color:#3fae6a; margin-top:6px;">✓ выполнено сегодня (+'+h.xp+' XP)</div>';
+          habitsHtml += '<div class="add-row" style="margin-top:10px;">';
+          if(arr.some(x=>x)) habitsHtml += '<button class="btn ghost small" onclick="Quest.resetSubtasks(\''+viewingWhoHabits+'\',\''+h.id+'\')">сбросить день</button>';
+          if(!doneToday && !skippedToday) habitsHtml += '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\')">Скип-токен</button>';
+          habitsHtml += '<button class="btn ghost small" onclick="Quest.removeHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">удалить</button></div>';
+        } else {
+          habitsHtml += '<div class="add-row" style="margin-top:10px;"><button class="btn small '+(doneToday?'ghost':'green')+'" onclick="Quest.toggleHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">'+(doneToday?'Отметить заново':'Готово сегодня (+'+h.xp+' XP)')+'</button>'+((!doneToday && !skippedToday) ? '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\')">Скип-токен</button>' : '')+'<button class="btn ghost small" onclick="Quest.removeHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">удалить</button></div>';
+        }
+        habitsHtml += '</div>';
+      });
+    }
+    habitsHtml += '<div class="add-row"><input type="text" id="newHabitName" placeholder="Новая привычка"><input type="number" id="newHabitXp" placeholder="XP" value="15"></div>';
+    habitsHtml += '<div class="add-row"><input type="text" id="newHabitSubtasks" placeholder="Чек-лист через запятую (необязательно) — например: план, отчёт" style="flex:2;"><button class="btn" onclick="Quest.submitHabit()">Добавить</button></div>';
+    habitsHtml += '<div class="add-row">'+
+      '<button class="btn ghost small" onclick="Quest.fillPreset(\'hours\')">заготовка: по часам 9:00–02:00</button>'+
+      '<button class="btn ghost small" onclick="Quest.fillPreset(\'reps4\')">заготовка: 4 подхода</button>'+
+      '<button class="btn ghost small" onclick="Quest.fillPreset(\'planreport\')">заготовка: план + отчёт</button>'+
+    '</div>';
+
+    // ---------- TAB: tasks ----------
+    let tasksHtml = '';
+    tasksHtml += '<div class="view-switch">'+PEOPLE.map(n=>'<button class="'+(viewingWhoTasks===n?'active':'')+'" onclick="Quest.setViewTasks(\''+n+'\')">'+PEOPLE_LABEL_TASKS[n]+'</button>').join('')+'</div>';
+    const taskPerson = state.people[viewingWhoTasks];
+
+    const todayForNav = todayStr();
+    const selWeekday = weekdayLabel(selectedTaskDate);
+    const selDateLabel = formatRuDate(selectedTaskDate) + (selectedTaskDate===todayForNav ? ' · сегодня' : '');
+    tasksHtml += '<div class="date-nav">';
+    tasksHtml += '<button class="btn ghost small" onclick="Quest.shiftTaskDate(-1)">←</button>';
+    tasksHtml += '<div class="date-nav-current"><span class="date-nav-weekday">'+selWeekday+'</span><span class="date-nav-full">'+selDateLabel+'</span></div>';
+    tasksHtml += '<button class="btn ghost small" onclick="Quest.shiftTaskDate(1)">→</button>';
+    tasksHtml += '<input type="date" id="taskDateJump" value="'+selectedTaskDate+'" onchange="Quest.setTaskDate(this.value)">';
+    if(selectedTaskDate !== todayForNav) tasksHtml += '<button class="btn ghost small" onclick="Quest.setTaskDate(\''+todayForNav+'\')">сегодня</button>';
+    tasksHtml += '</div>';
+
+    tasksHtml += '<div class="date-chip-row">';
+    for(let i=0;i<7;i++){
+      const d = shiftDateStr(todayForNav, i);
+      const lbl = (i===0?'Сегодня':(i===1?'Завтра':weekdayLabel(d)));
+      tasksHtml += '<button class="date-chip '+(selectedTaskDate===d?'active':'')+'" onclick="Quest.setTaskDate(\''+d+'\')">'+lbl+'<span>'+shortLabel(d)+'</span></button>';
+    }
+    tasksHtml += '</div>';
+
+    const activeTasks = taskPerson.tasksByDate[selectedTaskDate] || [];
+    tasksHtml += '<div class="section-head"><h2>'+PEOPLE_LABEL_TASKS[viewingWhoTasks]+'</h2><span class="section-count mono">'+activeTasks.filter(t=>t.done).length+'/'+activeTasks.length+'</span></div>';
+    if(activeTasks.length===0){ tasksHtml += '<div class="empty-note">Задач на эту дату нет — добавь ниже</div>'; }
+    else {
+      activeTasks.forEach(t=>{
+        tasksHtml += '<div class="shot-row"><div class="slate '+(t.done?'done':'')+'" onclick="Quest.toggleTask(\''+viewingWhoTasks+'\',\''+selectedTaskDate+'\',\''+t.id+'\')"></div><div class="shot-name '+(t.done?'done':'')+'">'+escapeHtml(t.name)+'</div><input type="number" class="task-minutes-input" placeholder="мин" value="'+(t.minutes||'')+'" onchange="Quest.setTaskMinutes(\''+viewingWhoTasks+'\',\''+selectedTaskDate+'\',\''+t.id+'\',this.value)"><div class="shot-xp">+'+t.xp+' XP</div><button class="shot-del" onclick="Quest.removeTask(\''+viewingWhoTasks+'\',\''+selectedTaskDate+'\',\''+t.id+'\')">×</button></div>';
+      });
+      const plannedMin = activeTasks.reduce((s,t)=>s+(t.minutes||0),0);
+      const doneMin = activeTasks.filter(t=>t.done).reduce((s,t)=>s+(t.minutes||0),0);
+      tasksHtml += '<div class="task-time-summary"><span>Итого запланировано задач на: <b>'+minutesToHM(plannedMin)+'</b></span><span>Итого выполнено задач на: <b>'+minutesToHM(doneMin)+'</b></span></div>';
+    }
+    tasksHtml += '<div class="add-row"><input type="text" id="newTaskName" placeholder="Новая задача"><input type="number" id="newTaskXp" placeholder="XP" value="10"><input type="number" id="newTaskMinutes" placeholder="мин"><button class="btn" onclick="Quest.submitTask()">Добавить</button></div>';
+    tasksHtml += '<div class="empty-note" style="margin-top:6px;">Невыполненные задачи прошедшего дня сами переезжают на сегодня, когда кто-то открывает трекер.</div>';
+
+    // ---------- TAB: ideas (shared) ----------
+    let ideasHtml = '';
+    const ideaCount = state.team.videos.filter(v=>v.status==='idea').length;
+    const shotCount = state.team.videos.filter(v=>v.status==='shot').length;
+    const editedCount = state.team.videos.filter(v=>v.status==='edited' && !PLATFORMS.every(pl=>v.platforms[pl.key])).length;
+    const publishedCount = state.team.videos.filter(v=>v.status==='edited' && PLATFORMS.every(pl=>v.platforms[pl.key])).length;
+
+    ideasHtml += '<div class="section-head"><h2>Идеи роликов</h2><span class="section-count mono">'+state.team.videos.length+'</span></div>';
+    ideasHtml += '<div class="video-board-summary"><span class="count-idea">идеи: '+ideaCount+'</span><span class="count-shot">отснято: '+shotCount+'</span><span class="count-edited">смонтировано: '+editedCount+'</span><span class="count-published">опубликовано: '+publishedCount+'</span></div>';
+
+    ideasHtml += '<div class="tab-switch date-switch">'+
+      '<button class="tab-btn '+(videoSubTab==='todo'?'active':'')+'" onclick="Quest.setVideoSubTab(\'todo\')">Надо снять ('+ideaCount+')</button>'+
+      '<button class="tab-btn '+(videoSubTab==='shot'?'active':'')+'" onclick="Quest.setVideoSubTab(\'shot\')">Отснято ('+shotCount+')</button>'+
+      '<button class="tab-btn '+(videoSubTab==='edited'?'active':'')+'" onclick="Quest.setVideoSubTab(\'edited\')">Смонтировано ('+editedCount+')</button>'+
+      '<button class="tab-btn '+(videoSubTab==='published'?'active':'')+'" onclick="Quest.setVideoSubTab(\'published\')">Опубликовано ('+publishedCount+')</button>'+
+    '</div>';
+
+    const visibleVideos = state.team.videos.filter(v=>{
+      const allPub = v.status==='edited' && PLATFORMS.every(pl=>v.platforms[pl.key]);
+      if(videoSubTab==='todo') return v.status==='idea';
+      if(videoSubTab==='shot') return v.status==='shot';
+      if(videoSubTab==='edited') return v.status==='edited' && !allPub;
+      if(videoSubTab==='published') return allPub;
+      return true;
+    });
+    const emptyLabels = {todo:'Пусто — добавь идею ниже', shot:'Пока ничего не отснято', edited:'Пока ничего не смонтировано', published:'Пока ничего не опубликовано'};
+
+    if(videoSubTab==='todo' && visibleVideos.length>0){
+      ideasHtml += '<div class="add-row">'+
+        '<button class="btn ghost small'+(videoSortMode==='readiness'?' active-sort':'')+'" onclick="Quest.setVideoSort(\'readiness\')">по готовности</button>'+
+        '<button class="btn ghost small'+(videoSortMode==='difficulty'?' active-sort':'')+'" onclick="Quest.setVideoSort(\'difficulty\')">по сложности ↑</button>'+
+        '<button class="btn ghost small'+(videoSortMode==='today'?' active-sort':'')+'" onclick="Quest.setVideoSort(\'today\')">снимаем сегодня</button>'+
+      '</div>';
+    }
+
+    if(visibleVideos.length===0){
+      ideasHtml += '<div class="empty-note">'+emptyLabels[videoSubTab]+'</div>';
+    } else {
+      let renderList = visibleVideos.slice().reverse();
+      if(videoSubTab === 'todo'){
+        if(videoSortMode === 'today'){
+          renderList = renderList.filter(v=>v.withSanya);
+        } else if(videoSortMode === 'difficulty'){
+          renderList = renderList.map((v,i)=>({v,i})).sort((a,b)=>{
+            const da = (a.v.difficulty==null) ? 999 : a.v.difficulty;
+            const db = (b.v.difficulty==null) ? 999 : b.v.difficulty;
+            return (da-db) || (a.i-b.i);
+          }).map(x=>x.v);
+        } else {
+          const readinessOrder = ['thinking','prep','needsSanya','ready'];
+          const readinessPriority = v => {
+            let idx = -1;
+            readinessOrder.forEach((k,i)=>{ if(v.readiness && v.readiness[k]) idx = i; });
+            return idx;
+          };
+          renderList = renderList.map((v,i)=>({v,i})).sort((a,b)=> readinessPriority(a.v)-readinessPriority(b.v) || a.i-b.i).map(x=>x.v);
+        }
+      }
+      if(renderList.length === 0){
+        ideasHtml += '<div class="empty-note">Пока ни одна идея не отмечена «снять в съёмочный день»</div>';
+      }
+      renderList.forEach(v=>{
+        normalizeVideo(v);
+        const allPublished = v.status==='edited' && PLATFORMS.every(pl=>v.platforms[pl.key]);
+        const colorClass = allPublished ? 'published' : v.status;
+        const pillLabel = allPublished ? 'Опубликовано' : STATUS_LABELS[v.status];
+        const isExpanded = expandedVideos.has(v.id);
+        ideasHtml += '<div class="video-card status-'+colorClass+'">';
+        ideasHtml += '<div class="video-top"><span class="video-chevron" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+(isExpanded?'▾':'▸')+'</span><div class="video-title" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+escapeHtml(v.title)+'</div><input type="number" class="difficulty-input" min="1" max="10" placeholder="слож." title="уровень сложности съёмки, 1-10" value="'+(v.difficulty||'')+'" onchange="Quest.setDifficulty(\''+v.id+'\',this.value)"><span class="status-pill '+colorClass+'">'+pillLabel+'</span></div>';
+        ideasHtml += '<label class="sanya-check"><input type="checkbox" '+(v.withSanya?'checked':'')+' onchange="Quest.toggleSanya(\''+v.id+'\')"> снять в съёмочный день</label>';
+        if(!isExpanded && v.notes && v.notes.trim()){ ideasHtml += '<div class="video-notes-preview">'+escapeHtml(v.notes).slice(0,80)+(v.notes.length>80?'…':'')+'</div>'; }
+        if(isExpanded){ ideasHtml += '<textarea class="video-notes" placeholder="Короткий сценарий, детали, крючок, реквизит..." oninput="Quest.updateVideoNotes(\''+v.id+'\', this.value)" onblur="Quest.persistVideoNotes()">'+escapeHtml(v.notes)+'</textarea>'; }
+        if(v.status === 'idea'){
+          ideasHtml += '<div class="readiness-row">'+
+            '<button class="readiness-chip red '+(v.readiness.thinking?'active':'')+'" onclick="Quest.toggleReadiness(\''+v.id+'\',\'thinking\')">надо додумать</button>'+
+            '<button class="readiness-chip yellow '+(v.readiness.prep?'active':'')+'" onclick="Quest.toggleReadiness(\''+v.id+'\',\'prep\')">надо подготовить реквизит</button>'+
+            '<button class="readiness-chip blue '+(v.readiness.needsSanya?'active':'')+'" onclick="Quest.toggleReadiness(\''+v.id+'\',\'needsSanya\')">для съёмки нужен Саня</button>'+
+            '<button class="readiness-chip green '+(v.readiness.ready?'active':'')+'" onclick="Quest.toggleReadiness(\''+v.id+'\',\'ready\')">всё готово к съёмке</button>'+
+          '</div>';
+        }
+        ideasHtml += '<div class="video-actions">';
+        const idx = STATUS_ORDER.indexOf(v.status);
+        if(idx < STATUS_ORDER.length-1) ideasHtml += '<button class="btn small teal" onclick="Quest.advanceVideo(\''+v.id+'\')">→ '+STATUS_LABELS[STATUS_ORDER[idx+1]]+'</button>';
+        if(idx > 0) ideasHtml += '<button class="btn ghost small" onclick="Quest.revertVideo(\''+v.id+'\')">← назад</button>';
+        ideasHtml += '<button class="btn ghost small" onclick="Quest.removeVideo(\''+v.id+'\')">удалить</button>';
+        ideasHtml += '</div>';
+        if(v.status === 'edited'){
+          ideasHtml += '<div class="platform-row">';
+          PLATFORMS.forEach(pl=>{ const active = v.platforms[pl.key]; ideasHtml += '<button class="platform-chip '+(active?'active':'')+'" onclick="Quest.togglePlatform(\''+v.id+'\',\''+pl.key+'\')">'+(active?'✓ ':'')+pl.label+'</button>'; });
+          ideasHtml += '</div>';
+        }
+        ideasHtml += '</div>';
+      });
+    }
+    if(videoSubTab==='todo') ideasHtml += '<div class="add-row"><input type="text" id="newVideoTitle" placeholder="Идея ролика"><button class="btn" onclick="Quest.submitVideo()">Добавить</button></div>';
+
+    // ---------- TAB: overview (shared goal + dual-person charts) ----------
+    let overviewHtml = '';
+    const g = state.team.goal;
+    const gPct = g.target ? Math.min(100, Math.round((g.current/g.target)*100)) : 0;
+    const daysLeft = g.deadline ? daysBetween(todayStr(), g.deadline) : null;
+    const totalSpan = Math.max(1, daysBetween(g.start, g.deadline));
+    const elapsed = Math.max(0, daysBetween(g.start, todayStr()));
+    const idealNow = (g.target||0) * Math.min(1, elapsed/totalSpan);
+    const diff = Math.round(g.current - idealNow);
+    const paceNeeded = (daysLeft && daysLeft > 0) ? (((g.target - g.current) / daysLeft)).toFixed(1) : null;
+    const weeklyPace = (totalSpan/7 > 0) ? (g.target / (totalSpan/7)).toFixed(1) : null;
+
+    overviewHtml += '<div class="goal-card"><div class="goal-header"><div><div class="goal-label">СЕЗОН (общий)</div><div class="goal-title">'+(g.text||'Цель не задана')+'</div></div><button class="goal-edit-btn" onclick="Quest.toggleGoalEdit()">'+(editingGoal?'отмена':'изменить')+'</button></div>';
+    overviewHtml += '<div class="big-stat"><span class="big-stat-num">'+g.current+'</span><span class="big-stat-label">из '+g.target+' видео смонтировано</span></div>';
+
+    if(editingGoal){
+      overviewHtml += '<div class="goal-edit-form"><div><label>Название цели</label><input type="text" id="goalTextInput" value="'+escapeHtml(g.text||'')+'"></div><div style="display:flex; gap:8px;"><div style="flex:1;"><label>Цель (число)</label><input type="number" id="goalTargetInput" value="'+(g.target||0)+'"></div><div style="flex:1;"><label>Сделано сейчас</label><input type="number" id="goalCurrentInput" value="'+(g.current||0)+'"></div></div><div style="display:flex; gap:8px;"><div style="flex:1;"><label>Дата начала (мск)</label><input type="date" id="goalStartInput" value="'+(g.start||'')+'"></div><div style="flex:1;"><label>Дедлайн (мск)</label><input type="date" id="goalDeadlineInput" value="'+(g.deadline||'')+'"></div></div><div class="goal-actions"><button class="btn" onclick="Quest.saveGoal()">Сохранить</button></div></div>';
+    } else {
+      overviewHtml += '<div class="goal-track"><div class="goal-fill" style="width:'+gPct+'%"></div></div><div class="goal-stats"><span>'+g.current+' / '+g.target+' видео ('+gPct+'%)</span><span>'+(daysLeft!==null ? (daysLeft>=0 ? daysLeft+' дн. осталось' : 'срок прошёл') : '')+'</span></div>';
+      if(paceNeeded) overviewHtml += '<div class="goal-stats" style="margin-top:2px;"><span>нужный темп: ~'+paceNeeded+' видео/день · ~'+weeklyPace+'/неделю</span><span></span></div>';
+      overviewHtml += buildGoalPaceSVG(g, state.team.goalHistory);
+      if(todayStr() < g.start){
+        overviewHtml += '<div class="pace-note ahead">сезон стартует '+formatRuDate(g.start)+' (через '+daysBetween(todayStr(), g.start)+' дн.)</div>';
+      } else {
+        overviewHtml += '<div class="empty-note" style="margin:2px 0 6px;">сегодня — '+(elapsed+1)+'-й день сезона из '+totalSpan+'</div>';
+        if(diff >= 1) overviewHtml += '<div class="pace-note ahead">▲ опережаешь график на ~'+diff+' видео</div>';
+        else if(diff <= -1) overviewHtml += '<div class="pace-note behind">▼ отстаёшь от графика на ~'+Math.abs(diff)+' видео</div>';
+        else overviewHtml += '<div class="pace-note ahead">точно по графику</div>';
+      }
+    }
+    overviewHtml += '</div>';
+
+    overviewHtml += '<div class="section-head"><h2>Ролики по статусам</h2></div>';
+    overviewHtml += '<div class="video-board-summary"><span class="count-idea">идеи: '+ideaCount+'</span><span class="count-shot">отснято: '+shotCount+'</span><span class="count-edited">смонтировано: '+editedCount+'</span><span class="count-published">опубликовано: '+publishedCount+'</span></div>';
+
+    overviewHtml += '<div class="section-head"><h2>Динамика</h2><div class="chart-range-toggle">'+[14,30,60].map(n=>'<button class="btn range '+(state.team.chartRangeDays===n?'active':'')+'" onclick="Quest.setRange('+n+')">'+n+' дн</button>').join('')+'</div></div>';
+
+    const chartDays = seasonChartDays(state.team.chartRangeDays);
+    const today = todayStr();
+
+    const habitSeries = PEOPLE.map((n,i)=>({
+      values: chartDays.map(d=>personHabitPct(state.people[n], d)),
+      colorClass: i===0?'chart-teal':'chart-p2', label: n, format: v=>v+'%'
+    }));
+    const todayHabitVals = habitSeries.map(s=>s.values[s.values.length-1]);
+    overviewHtml += '<div class="chart-card"><div class="chart-title">Привычки — % выполнено по дням</div>';
+    overviewHtml += '<div class="chart-legend">'+PEOPLE.map((n,i)=>'<span><i style="background:'+(i===0?'var(--teal)':'var(--p2)')+'"></i>'+escapeHtml(n)+': '+todayHabitVals[i]+'%</span>').join('')+'</div>';
+    overviewHtml += buildBarChart(chartDays, habitSeries, 100)+'</div>';
+
+    const taskSeries = PEOPLE.map((n,i)=>({
+      values: chartDays.map(d=>personTaskMinutes(state.people[n], d)),
+      colorClass: i===0?'chart-teal':'chart-p2', label: n, format: minutesToHM
+    }));
+    const todayTaskVals = taskSeries.map(s=>s.values[s.values.length-1]);
+    overviewHtml += '<div class="chart-card"><div class="chart-title">Задачи — время выполнено по дням</div>';
+    overviewHtml += '<div class="chart-legend">'+PEOPLE.map((n,i)=>'<span><i style="background:'+(i===0?'var(--teal)':'var(--p2)')+'"></i>'+escapeHtml(n)+': '+minutesToHM(todayTaskVals[i])+'</span>').join('')+'</div>';
+    overviewHtml += buildBarChart(chartDays, taskSeries)+'</div>';
+
+    overviewHtml += '<div class="section-head"><h2>Награды и штрафы</h2><span class="section-count mono">'+state.team.rules.length+'</span></div>';
+    overviewHtml += '<div class="empty-note" style="margin-bottom:10px;">Общий список — трекер их не выдаёт и не списывает автоматически.</div>';
+    if(state.team.rules.length===0){ overviewHtml += '<div class="empty-note">Задайте свои правила игры — например: «500 XP = кофе»</div>'; }
+    else { state.team.rules.forEach(r=>{ overviewHtml += '<div class="rule-row"><span class="rule-tag '+r.type+'">'+(r.type==='reward'?'НАГРАДА':'ШТРАФ')+'</span><div style="flex:1;">'+escapeHtml(r.text)+'</div><button class="shot-del" onclick="Quest.removeRule(\''+r.id+'\')">×</button></div>'; }); }
+    overviewHtml += '<div class="add-row"><select id="newRuleType"><option value="reward">Награда</option><option value="penalty">Штраф</option></select><input type="text" id="newRuleText" placeholder="Например: 300 XP = новый объектив" style="flex:2;"><button class="btn" onclick="Quest.submitRule()">Добавить</button></div>';
+
+    overviewHtml += '<div class="section-head"><h2>Бэкап</h2></div>';
+    overviewHtml += '<div class="chart-card"><div class="chart-summary" style="margin-bottom:10px;">Данные хранятся в общем облачном хранилище Claude. Бэкап всё равно стоит делать на всякий случай.</div><div class="goal-actions"><button class="btn ghost small" onclick="Quest.exportBackup()">Скачать бэкап (.json)</button><button class="btn ghost small" onclick="Quest.triggerImport()">Загрузить бэкап</button></div><input type="file" id="importFileInput" accept="application/json" style="display:none" onchange="Quest.handleImport(this)"></div>';
+
+    if(activeTab === 'habits') html += habitsHtml;
+    else if(activeTab === 'tasks') html += tasksHtml;
+    else if(activeTab === 'ideas') html += ideasHtml;
+    else html += overviewHtml;
+
+    app.innerHTML = html;
+  }
+
+  // ---------- backup export/import ----------
+  function exportBackup(){
+    try{
+      const payload = { team: state.team, people: state.people };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'quest-log-backup-'+todayStr()+'.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){ console.error('export failed', e); alert('Не получилось сделать бэкап'); }
+  }
+  function triggerImport(){ document.getElementById('importFileInput').click(); }
+  function handleImportFile(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const parsed = JSON.parse(e.target.result);
+        if(!confirm('Загрузить бэкап? Текущие данные будут заменены.')) return;
+        if(parsed.people && parsed.team){
+          state.team = Object.assign(newTeam(), parsed.team);
+          PEOPLE.forEach(n=>{
+            if(parsed.people[n]) state.people[n] = Object.assign(newPerson(), parsed.people[n]);
+          });
+        } else {
+          // legacy single-user backup: goal/rules/videos go to team, rest becomes Дима's personal data
+          state.team = Object.assign(newTeam(), {
+            goal: parsed.goal || state.team.goal,
+            goalHistory: parsed.goalHistory || {},
+            rules: parsed.rules || [],
+            videos: parsed.videos || [],
+            chartRangeDays: parsed.chartRangeDays || 14
+          });
+          state.people['Дима'] = Object.assign(newPerson(), {
+            xpTotal: parsed.xpTotal||0, lastRankIndex: parsed.lastRankIndex||0, skipTokens: parsed.skipTokens||0,
+            habits: parsed.habits||[], tasksByDate: parsed.tasksByDate||{}, log: parsed.log||{},
+            taskStatsHistory: parsed.taskStatsHistory||{}, lastActiveDate: parsed.lastActiveDate||todayStr()
+          });
+        }
+        PEOPLE.forEach(n=>{ if(!state.people[n]) state.people[n] = newPerson(); });
+        enforceSeasonVersion();
+        state.team.videos.forEach(normalizeVideo);
+        saveTeam();
+        PEOPLE.forEach(savePerson);
+        render();
+      }catch(err){ alert('Файл повреждён или это не бэкап трекера'); }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  window.Quest = {
+    toggleTask, removeTask,
+    submitTask(){ addTask(viewingWhoTasks, selectedTaskDate, document.getElementById('newTaskName').value, parseInt(document.getElementById('newTaskXp').value)||10, parseInt(document.getElementById('newTaskMinutes').value)||0); },
+    setTaskMinutes,
+    toggleHabit: toggleHabitToday,
+    useSkip: useSkipToken,
+    removeHabit,
+    submitHabit(){ addHabit(viewingWhoHabits, document.getElementById('newHabitName').value, parseInt(document.getElementById('newHabitXp').value)||15, document.getElementById('newHabitSubtasks').value); },
+    toggleSubtask, resetSubtasks,
+    fillPreset(type){
+      const field = document.getElementById('newHabitSubtasks');
+      if(!field) return;
+      if(type==='hours'){ const labels=[]; for(let hr=9;hr<=23;hr++) labels.push(hr+':00'); for(let hr=0;hr<=2;hr++) labels.push(hr+':00'); field.value = labels.join(', '); }
+      else if(type==='reps4'){ field.value = 'Подход 1, Подход 2, Подход 3, Подход 4'; }
+      else if(type==='planreport'){ field.value = 'План, Отчёт'; }
+    },
+    removeRule,
+    submitRule(){ addRule(document.getElementById('newRuleType').value, document.getElementById('newRuleText').value); },
+    toggleGoalEdit(){ editingGoal = !editingGoal; render(); },
+    saveGoal: saveGoalForm,
+    setRange: setChartRange,
+    dismissPerk(){ dismissedPerk = true; perkForName = null; render(); },
+    exportBackup, triggerImport, handleImport: handleImportFile,
+    submitVideo(){ addVideo(document.getElementById('newVideoTitle').value); },
+    advanceVideo, revertVideo, togglePlatform, removeVideo,
+    setTab(t){ activeTab = t; render(); },
+    shiftHabitWeek,
+    setVideoSubTab(t){ videoSubTab = t; render(); },
+    toggleReadiness: toggleReadinessFlag,
+    toggleSanya: toggleWithSanya,
+    setDifficulty: setVideoDifficulty,
+    setVideoSort(mode){ videoSortMode = mode; render(); },
+    toggleVideoExpand, updateVideoNotes, persistVideoNotes,
+    setTaskDate(d){ selectedTaskDate = d; render(); },
+    shiftTaskDate(n){ selectedTaskDate = shiftDateStr(selectedTaskDate, n); render(); },
+    setViewHabits(n){ viewingWhoHabits = n; render(); },
+    setViewTasks(n){ viewingWhoTasks = n; render(); },
+    undo,
+    manualSave
+  };
+
+  init();
+})();
+</script>
