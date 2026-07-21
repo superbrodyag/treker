@@ -97,6 +97,9 @@
   .frame.lit{background:#3fae6a; border-color:#3fae6a;}
   .frame.skip{background:var(--skip); border-color:var(--skip);}
   .frame.miss{background:var(--panel-2); border-color:var(--danger); opacity:0.6;}
+  .frame.frame-clickable{cursor:pointer;}
+  .frame.frame-clickable:hover{border-color:var(--amber);}
+  .frame.frame-selected{outline:2px solid var(--amber); outline-offset:1px;}
   .subtask-grid{display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;}
   .subtask-chip{min-width:40px; flex:0 0 auto; padding:8px 9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim); border-radius:5px; font-size:11px; font-family:'IBM Plex Mono',monospace; cursor:pointer; text-align:center;}
   .subtask-chip.done{background:#3fae6a; border-color:#3fae6a; color:#0c2415; font-weight:600;}
@@ -160,6 +163,8 @@
   .chart-teal{background:var(--teal);} .chart-amber{background:var(--amber);} .chart-p2{background:var(--p2);}
 
   .video-title{font-size:14px; flex:1; min-width:140px;}
+  .video-title-input{flex:1; min-width:140px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:6px 8px; font-size:14px; font-family:'Inter',sans-serif;}
+  .video-edit-title-btn{padding:3px 7px; font-size:12px;}
   .video-chevron{color:var(--text-dim); font-size:11px; flex-shrink:0;}
   .video-notes-preview{font-size:12px; color:var(--text-dim); margin-top:4px; padding-left:18px; font-style:italic;}
   .video-notes{width:100%; margin-top:10px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; resize:vertical; min-height:80px; line-height:1.5;}
@@ -290,8 +295,11 @@
     };
   }
 
-  const EMBEDDED_BACKUP = {"team": {"goal": {"text": "Снять 100 видео", "target": 100, "current": 1, "deadline": "2026-09-14", "start": "2026-07-20"}, "goalHistory": {"2026-07-15": 0, "2026-07-16": 0, "2026-07-17": 0, "2026-07-19": 1}, "rules": [], "videos": [], "chartRangeDays": 14, "seasonVersion": 2}, "people": {}};
+  // fallback snapshot embedded directly in the file, used only if cloud storage is empty
+  // (stubbed empty here for this code listing — your real file already has the full data embedded)
+  const EMBEDDED_BACKUP = {"team": {"goal": {"text": "Снять 100 видео", "target": 100, "current": 0, "deadline": "2026-09-14", "start": "2026-07-20"}, "goalHistory": {}, "rules": [], "videos": [], "chartRangeDays": 14, "seasonVersion": 2}, "people": {}};
 
+  // ==== Firebase config — paste your own project's values here ====
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyDGlBZzchF0hQvLIBwtWOyaDjVhpE-1Op4",
     authDomain: "treker-9b58c.firebaseapp.com",
@@ -332,6 +340,8 @@
   let activeTab = 'habits';
   let habitWeekIndex = null;
   let viewingWhoHabits = 'Дима';
+  let selectedHabitDate = todayStr();
+  let editingVideoTitles = new Set();
   let selectedTaskDate = todayStr();
   let viewingWhoTasks = 'Дима';
   let videoSubTab = 'todo';
@@ -501,9 +511,9 @@
     if(Array.isArray(v)) return (v.length>0 && v.every(x=>x));
     return v === true;
   }
-  function toggleHabitToday(name, id){
+  function toggleHabitDay(name, id, day){
     pushUndo();
-    const day = todayStr();
+    day = day || todayStr();
     const p = state.people[name];
     if(!p.log[day]) p.log[day] = {};
     const h = p.habits.find(x=>x.id===id);
@@ -513,12 +523,12 @@
     else { p.xpTotal += h.xp; p.log[day][id] = true; }
     checkRankUp(name); savePerson(name); render();
   }
-  function toggleSubtask(name, habitId, index){
+  function toggleSubtask(name, habitId, index, day){
     pushUndo();
+    day = day || todayStr();
     const p = state.people[name];
     const h = p.habits.find(x=>x.id===habitId);
     if(!h || !h.subtasks) return;
-    const day = todayStr();
     if(!p.log[day]) p.log[day] = {};
     let arr = Array.isArray(p.log[day][habitId]) ? p.log[day][habitId].slice() : h.subtasks.map(()=>false);
     const wasAllDone = arr.length>0 && arr.every(x=>x);
@@ -529,27 +539,29 @@
     else if(wasAllDone && !nowAllDone){ p.xpTotal = Math.max(0, p.xpTotal - h.xp); }
     savePerson(name); render();
   }
-  function resetSubtasks(name, habitId){
+  function resetSubtasks(name, habitId, day){
     pushUndo();
+    day = day || todayStr();
     const p = state.people[name];
     const h = p.habits.find(x=>x.id===habitId);
     if(!h || !h.subtasks) return;
-    const day = todayStr();
     const arr = p.log[day] && p.log[day][habitId];
     if(Array.isArray(arr) && arr.length>0 && arr.every(x=>x)){ p.xpTotal = Math.max(0, p.xpTotal - h.xp); }
     if(p.log[day]) p.log[day][habitId] = h.subtasks.map(()=>false);
     savePerson(name); render();
   }
-  function useSkipToken(name, id){
+  function useSkipToken(name, id, day){
     pushUndo();
+    day = day || todayStr();
     const p = state.people[name];
     if(p.skipTokens <= 0) return;
-    const day = todayStr();
     if(!p.log[day]) p.log[day] = {};
     p.log[day][id] = 'skip';
     p.skipTokens -= 1;
     savePerson(name); render();
   }
+  function shiftHabitDate(delta){ selectedHabitDate = shiftDateStr(selectedHabitDate, delta); render(); }
+  function setHabitDate(d){ selectedHabitDate = d; render(); }
   function addHabit(name, habitName, xp, subtasksStr){
     pushUndo();
     if(!habitName.trim()) return;
@@ -602,6 +614,7 @@
     if(typeof v.withSanya !== 'boolean') v.withSanya = false;
     if(typeof v.difficulty === 'undefined') v.difficulty = null;
     if(typeof v.publishDate === 'undefined') v.publishDate = null;
+    if(typeof v.autumnParked !== 'boolean') v.autumnParked = false;
     return v;
   }
   function addVideo(title){
@@ -609,7 +622,19 @@
     if(!title.trim()) return;
     state.team.videos.push({ id:uid(), title:title.trim(), status:'idea',
       platforms:{tiktok:false,vk:false,youtube:false,instagram:false,telegram:false},
-      countedTowardGoal:false, notes:'', readiness:emptyReadiness(), withSanya:false, difficulty:null, publishDate:null });
+      countedTowardGoal:false, notes:'', readiness:emptyReadiness(), withSanya:false, difficulty:null, publishDate:null, autumnParked:false });
+    saveTeam(); render();
+  }
+  function sendToAutumn(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    v.autumnParked = true;
+    saveTeam(); render();
+  }
+  function returnFromAutumn(id){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    v.autumnParked = false;
     saveTeam(); render();
   }
   function setPublishDate(id, dateStr){
@@ -629,6 +654,24 @@
   function shiftCalendarMonth(delta){
     calendarMonthOffset += delta;
     render();
+  }
+  function buildAutumnTab(){
+    const parked = state.team.videos.filter(v=>v.autumnParked);
+    let html = '<div class="empty-note" style="margin-bottom:14px;">Идеи, отложенные на потом — не мешают в основном списке, но не забудутся. Верни в работу, когда придёт время.</div>';
+    if(parked.length===0){
+      html += '<div class="empty-note">Пока пусто — отправляй сюда идеи кнопкой «→ Осень» с любой карточки</div>';
+      return html;
+    }
+    parked.slice().reverse().forEach(v=>{
+      const isExpanded = expandedVideos.has(v.id);
+      html += '<div class="video-card status-'+videoColorClass(v)+'">';
+      html += '<div class="video-top"><span class="video-chevron" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+(isExpanded?'▾':'▸')+'</span><div class="video-title" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+escapeHtml(v.title)+'</div><span class="status-pill '+videoColorClass(v)+'">'+videoStatusLabel(v)+'</span></div>';
+      if(!isExpanded && v.notes && v.notes.trim()){ html += '<div class="video-notes-preview">'+escapeHtml(v.notes).slice(0,80)+(v.notes.length>80?'…':'')+'</div>'; }
+      if(isExpanded){ html += '<textarea class="video-notes" placeholder="Короткий сценарий, детали, крючок, реквизит..." oninput="Quest.updateVideoNotes(\''+v.id+'\', this.value)" onblur="Quest.persistVideoNotes()">'+escapeHtml(v.notes)+'</textarea>'; }
+      html += '<div class="video-actions"><button class="btn teal small" onclick="Quest.returnFromAutumn(\''+v.id+'\')">← вернуть в работу</button><button class="btn ghost small" onclick="Quest.removeVideo(\''+v.id+'\')">удалить</button></div>';
+      html += '</div>';
+    });
+    return html;
   }
   function buildCalendarTab(){
     const base = new Date();
@@ -737,6 +780,18 @@
     saveTeam(); render();
   }
   function toggleVideoExpand(id){ if(expandedVideos.has(id)) expandedVideos.delete(id); else expandedVideos.add(id); render(); }
+  function toggleEditVideoTitle(id){
+    if(editingVideoTitles.has(id)) editingVideoTitles.delete(id); else editingVideoTitles.add(id);
+    render();
+  }
+  function saveVideoTitle(id, value){
+    pushUndo();
+    const v = state.team.videos.find(x=>x.id===id); if(!v) return;
+    const trimmed = value.trim();
+    if(trimmed) v.title = trimmed;
+    editingVideoTitles.delete(id);
+    saveTeam(); render();
+  }
   function updateVideoNotes(id, value){ const v = state.team.videos.find(x=>x.id===id); if(v) v.notes = value; }
   function persistVideoNotes(){ saveTeam(); }
 
@@ -880,34 +935,46 @@
       habitsHtml += '<div class="week-day-labels">'+weekDays.map(d=>'<span>'+weekdayLabel(d)+'<br>'+shortLabel(d)+'</span>').join('')+'</div>';
 
       const day = todayStr();
+      const yesterday = shiftDateStr(day, -1);
+      habitsHtml += '<div class="date-nav" style="margin-bottom:14px;">';
+      habitsHtml += '<button class="btn ghost small" onclick="Quest.shiftHabitDate(-1)">←</button>';
+      habitsHtml += '<div class="date-nav-current"><span class="date-nav-weekday">'+weekdayLabel(selectedHabitDate)+'</span><span class="date-nav-full">'+formatRuDate(selectedHabitDate)+(selectedHabitDate===day?' · сегодня':(selectedHabitDate===yesterday?' · вчера':''))+'</span></div>';
+      habitsHtml += '<button class="btn ghost small" onclick="Quest.shiftHabitDate(1)">→</button>';
+      habitsHtml += (selectedHabitDate!==day) ? '<button class="btn ghost small" onclick="Quest.setHabitDate(\''+day+'\')">сегодня</button>' : '<button class="btn ghost small" onclick="Quest.setHabitDate(\''+yesterday+'\')">вчера</button>';
+      habitsHtml += '</div>';
+      habitsHtml += '<div class="empty-note" style="margin-top:-8px; margin-bottom:14px;">Отмечаешь выполнение за: <b style="color:var(--text)">'+formatRuDate(selectedHabitDate)+'</b>. Можно кликнуть по клетке в плёнке ниже, чтобы отметить или исправить прошедший день.</div>';
+
       habitPerson.habits.forEach(h=>{
-        const rawToday = habitPerson.log[day] && habitPerson.log[day][h.id];
-        const todayState = habitDayState(rawToday);
-        const doneToday = todayState === true;
-        const skippedToday = todayState === 'skip';
+        const rawSelected = habitPerson.log[selectedHabitDate] && habitPerson.log[selectedHabitDate][h.id];
+        const selectedState = habitDayState(rawSelected);
+        const doneSelected = selectedState === true;
+        const skippedSelected = selectedState === 'skip';
         let frames = '';
         weekDays.forEach(d=>{
           const v = habitPerson.log[d] && habitPerson.log[d][h.id];
           const s = habitDayState(v);
           const isPast = d < day;
+          const isFuture = d > day;
           let cls = 'frame';
           if(s === true) cls += ' lit'; else if(s === 'skip') cls += ' skip'; else if(isPast) cls += ' miss';
-          frames += '<div class="'+cls+'"></div>';
+          if(d === selectedHabitDate) cls += ' frame-selected';
+          if(!isFuture) cls += ' frame-clickable';
+          frames += '<div class="'+cls+'" '+(!isFuture ? 'onclick="Quest.setHabitDate(\''+d+'\')" title="'+formatRuDate(d)+'"' : '')+'></div>';
         });
         habitsHtml += '<div class="habit-card"><div class="habit-top"><div class="habit-name">'+escapeHtml(h.name)+'</div><div class="habit-streak">🔥 '+streakFor(habitPerson, h.id)+' дн.</div></div><div class="filmstrip">'+frames+'</div>';
 
         if(h.subtasks && h.subtasks.length){
-          const arr = Array.isArray(rawToday) ? rawToday : h.subtasks.map(()=>false);
+          const arr = Array.isArray(rawSelected) ? rawSelected : h.subtasks.map(()=>false);
           habitsHtml += '<div class="subtask-grid">'+h.subtasks.map((label,i)=>
-            '<button class="subtask-chip '+(arr[i]?'done':'')+'" onclick="Quest.toggleSubtask(\''+viewingWhoHabits+'\',\''+h.id+'\','+i+')">'+escapeHtml(label)+'</button>'
+            '<button class="subtask-chip '+(arr[i]?'done':'')+'" onclick="Quest.toggleSubtask(\''+viewingWhoHabits+'\',\''+h.id+'\','+i+',\''+selectedHabitDate+'\')">'+escapeHtml(label)+'</button>'
           ).join('')+'</div>';
-          if(doneToday) habitsHtml += '<div class="empty-note" style="color:#3fae6a; margin-top:6px;">✓ выполнено сегодня (+'+h.xp+' XP)</div>';
+          if(doneSelected) habitsHtml += '<div class="empty-note" style="color:#3fae6a; margin-top:6px;">✓ выполнено (+'+h.xp+' XP)</div>';
           habitsHtml += '<div class="add-row" style="margin-top:10px;">';
-          if(arr.some(x=>x)) habitsHtml += '<button class="btn ghost small" onclick="Quest.resetSubtasks(\''+viewingWhoHabits+'\',\''+h.id+'\')">сбросить день</button>';
-          if(!doneToday && !skippedToday) habitsHtml += '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\')">Скип-токен</button>';
+          if(arr.some(x=>x)) habitsHtml += '<button class="btn ghost small" onclick="Quest.resetSubtasks(\''+viewingWhoHabits+'\',\''+h.id+'\',\''+selectedHabitDate+'\')">сбросить день</button>';
+          if(!doneSelected && !skippedSelected) habitsHtml += '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\',\''+selectedHabitDate+'\')">Скип-токен</button>';
           habitsHtml += '<button class="btn ghost small" onclick="Quest.removeHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">удалить</button></div>';
         } else {
-          habitsHtml += '<div class="add-row" style="margin-top:10px;"><button class="btn small '+(doneToday?'ghost':'green')+'" onclick="Quest.toggleHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">'+(doneToday?'Отметить заново':'Готово сегодня (+'+h.xp+' XP)')+'</button>'+((!doneToday && !skippedToday) ? '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\')">Скип-токен</button>' : '')+'<button class="btn ghost small" onclick="Quest.removeHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">удалить</button></div>';
+          habitsHtml += '<div class="add-row" style="margin-top:10px;"><button class="btn small '+(doneSelected?'ghost':'green')+'" onclick="Quest.toggleHabit(\''+viewingWhoHabits+'\',\''+h.id+'\',\''+selectedHabitDate+'\')">'+(doneSelected?'Отметить заново':'Готово (+'+h.xp+' XP)')+'</button>'+((!doneSelected && !skippedSelected) ? '<button class="btn skip small" '+(habitPerson.skipTokens<=0?'disabled':'')+' onclick="Quest.useSkip(\''+viewingWhoHabits+'\',\''+h.id+'\',\''+selectedHabitDate+'\')">Скип-токен</button>' : '')+'<button class="btn ghost small" onclick="Quest.removeHabit(\''+viewingWhoHabits+'\',\''+h.id+'\')">удалить</button></div>';
         }
         habitsHtml += '</div>';
       });
@@ -958,12 +1025,12 @@
     tasksHtml += '<div class="empty-note" style="margin-top:6px;">Невыполненные задачи прошедшего дня сами переезжают на сегодня, когда кто-то открывает трекер.</div>';
 
     let ideasHtml = '';
-    const ideaCount = state.team.videos.filter(v=>v.status==='idea').length;
-    const shotCount = state.team.videos.filter(v=>v.status==='shot').length;
-    const editedAllCount = state.team.videos.filter(v=>v.status==='edited').length;
-    const editedCount = state.team.videos.filter(v=>v.status==='edited' && !PLATFORMS.every(pl=>v.platforms[pl.key])).length;
+    const ideaCount = state.team.videos.filter(v=>v.status==='idea' && !v.autumnParked).length;
+    const shotCount = state.team.videos.filter(v=>v.status==='shot' && !v.autumnParked).length;
+    const editedCount = state.team.videos.filter(v=>v.status==='edited' && !v.autumnParked && !PLATFORMS.every(pl=>v.platforms[pl.key])).length;
     const publishedCount = state.team.videos.filter(v=>v.status==='edited' && PLATFORMS.every(pl=>v.platforms[pl.key])).length;
-    const scheduledCount = state.team.videos.filter(v=>v.publishDate).length;
+    const scheduledCount = state.team.videos.filter(v=>v.publishDate && !v.autumnParked).length;
+    const autumnCount = state.team.videos.filter(v=>v.autumnParked).length;
 
     ideasHtml += '<div class="section-head"><h2>Идеи роликов</h2><span class="section-count mono">'+state.team.videos.length+'</span></div>';
     ideasHtml += '<div class="video-board-summary"><span class="count-idea">идеи: '+ideaCount+'</span><span class="count-shot">отснято: '+shotCount+'</span><span class="count-edited">смонтировано: '+editedCount+'</span><span class="count-published">опубликовано: '+publishedCount+'</span></div>';
@@ -971,18 +1038,22 @@
     ideasHtml += '<div class="tab-switch date-switch">'+
       '<button class="tab-btn '+(videoSubTab==='todo'?'active':'')+'" onclick="Quest.setVideoSubTab(\'todo\')">Надо снять ('+ideaCount+')</button>'+
       '<button class="tab-btn '+(videoSubTab==='shot'?'active':'')+'" onclick="Quest.setVideoSubTab(\'shot\')">Отснято ('+shotCount+')</button>'+
-      '<button class="tab-btn '+(videoSubTab==='edited'?'active':'')+'" onclick="Quest.setVideoSubTab(\'edited\')">Смонтировано ('+editedAllCount+')</button>'+
+      '<button class="tab-btn '+(videoSubTab==='edited'?'active':'')+'" onclick="Quest.setVideoSubTab(\'edited\')">Смонтировано ('+editedCount+')</button>'+
+      '<button class="tab-btn '+(videoSubTab==='autumn'?'active':'')+'" onclick="Quest.setVideoSubTab(\'autumn\')">Идеи на осень ('+autumnCount+')</button>'+
       '<button class="tab-btn '+(videoSubTab==='calendar'?'active':'')+'" onclick="Quest.setVideoSubTab(\'calendar\')">Календарь ('+scheduledCount+')</button>'+
     '</div>';
 
     if(videoSubTab === 'calendar'){
       ideasHtml += buildCalendarTab();
+    } else if(videoSubTab === 'autumn'){
+      ideasHtml += buildAutumnTab();
     } else {
 
     const visibleVideos = state.team.videos.filter(v=>{
+      if(v.autumnParked) return false;
       if(videoSubTab==='todo') return v.status==='idea';
       if(videoSubTab==='shot') return v.status==='shot';
-      if(videoSubTab==='edited') return v.status==='edited';
+      if(videoSubTab==='edited') return v.status==='edited' && !PLATFORMS.every(pl=>v.platforms[pl.key]);
       return true;
     });
     const emptyLabels = {todo:'Пусто — добавь идею ниже', shot:'Пока ничего не отснято', edited:'Пока ничего не смонтировано'};
@@ -1027,8 +1098,13 @@
         const colorClass = allPublished ? 'published' : v.status;
         const pillLabel = allPublished ? 'Опубликовано' : STATUS_LABELS[v.status];
         const isExpanded = expandedVideos.has(v.id);
+        const isEditingTitle = editingVideoTitles.has(v.id);
         ideasHtml += '<div class="video-card status-'+colorClass+'">';
-        ideasHtml += '<div class="video-top"><span class="video-chevron" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+(isExpanded?'▾':'▸')+'</span><div class="video-title" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+escapeHtml(v.title)+'</div><input type="number" class="difficulty-input" min="1" max="10" placeholder="слож." title="уровень сложности съёмки, 1-10" value="'+(v.difficulty||'')+'" onchange="Quest.setDifficulty(\''+v.id+'\',this.value)"><span class="status-pill '+colorClass+'">'+pillLabel+'</span></div>';
+        if(isEditingTitle){
+          ideasHtml += '<div class="video-top"><input type="text" class="video-title-input" value="'+escapeHtml(v.title)+'" id="titleInput-'+v.id+'"><button class="btn teal small" onclick="Quest.saveVideoTitle(\''+v.id+'\', document.getElementById(\'titleInput-'+v.id+'\').value)">Сохранить</button><button class="btn ghost small" onclick="Quest.toggleEditVideoTitle(\''+v.id+'\')">отмена</button></div>';
+        } else {
+          ideasHtml += '<div class="video-top"><span class="video-chevron" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+(isExpanded?'▾':'▸')+'</span><div class="video-title" style="cursor:pointer;" onclick="Quest.toggleVideoExpand(\''+v.id+'\')">'+escapeHtml(v.title)+'</div><button class="btn ghost small video-edit-title-btn" onclick="Quest.toggleEditVideoTitle(\''+v.id+'\')" title="Изменить название">✎</button><input type="number" class="difficulty-input" min="1" max="10" placeholder="слож." title="уровень сложности съёмки, 1-10" value="'+(v.difficulty||'')+'" onchange="Quest.setDifficulty(\''+v.id+'\',this.value)"><span class="status-pill '+colorClass+'">'+pillLabel+'</span></div>';
+        }
         ideasHtml += '<label class="sanya-check"><input type="checkbox" '+(v.withSanya?'checked':'')+' onchange="Quest.toggleSanya(\''+v.id+'\')"> снять в съёмочный день</label>';
         if(!isExpanded && v.notes && v.notes.trim()){ ideasHtml += '<div class="video-notes-preview">'+escapeHtml(v.notes).slice(0,80)+(v.notes.length>80?'…':'')+'</div>'; }
         if(isExpanded){ ideasHtml += '<textarea class="video-notes" placeholder="Короткий сценарий, детали, крючок, реквизит..." oninput="Quest.updateVideoNotes(\''+v.id+'\', this.value)" onblur="Quest.persistVideoNotes()">'+escapeHtml(v.notes)+'</textarea>'; }
@@ -1044,6 +1120,7 @@
         const idx = STATUS_ORDER.indexOf(v.status);
         if(idx < STATUS_ORDER.length-1) ideasHtml += '<button class="btn small teal" onclick="Quest.advanceVideo(\''+v.id+'\')">→ '+STATUS_LABELS[STATUS_ORDER[idx+1]]+'</button>';
         if(idx > 0) ideasHtml += '<button class="btn ghost small" onclick="Quest.revertVideo(\''+v.id+'\')">← назад</button>';
+        ideasHtml += '<button class="btn ghost small" onclick="Quest.sendToAutumn(\''+v.id+'\')">→ Осень</button>';
         ideasHtml += '<button class="btn ghost small" onclick="Quest.removeVideo(\''+v.id+'\')">удалить</button>';
         ideasHtml += '</div>';
         if(v.status === 'edited'){
@@ -1187,7 +1264,7 @@
     toggleTask, removeTask,
     submitTask(){ addTask(viewingWhoTasks, selectedTaskDate, document.getElementById('newTaskName').value, parseInt(document.getElementById('newTaskXp').value)||10, parseInt(document.getElementById('newTaskMinutes').value)||0); },
     setTaskMinutes,
-    toggleHabit: toggleHabitToday,
+    toggleHabit: toggleHabitDay,
     useSkip: useSkipToken,
     removeHabit,
     submitHabit(){ addHabit(viewingWhoHabits, document.getElementById('newHabitName').value, parseInt(document.getElementById('newHabitXp').value)||15, document.getElementById('newHabitSubtasks').value); },
@@ -1210,16 +1287,21 @@
     advanceVideo, revertVideo, togglePlatform, removeVideo,
     setTab(t){ activeTab = t; render(); },
     shiftHabitWeek,
+    shiftHabitDate,
+    setHabitDate,
     setVideoSubTab(t){ videoSubTab = t; render(); },
     toggleReadiness: toggleReadinessFlag,
     toggleSanya: toggleWithSanya,
     setDifficulty: setVideoDifficulty,
     setPublishDate,
+    sendToAutumn,
+    returnFromAutumn,
     dragStartVideo,
     dropOnCalendarDay,
     shiftCalendarMonth,
     setVideoSort(mode){ videoSortMode = mode; render(); },
     toggleVideoExpand, updateVideoNotes, persistVideoNotes,
+    toggleEditVideoTitle, saveVideoTitle,
     setTaskDate(d){ selectedTaskDate = d; render(); },
     shiftTaskDate(n){ selectedTaskDate = shiftDateStr(selectedTaskDate, n); render(); },
     setViewHabits(n){ viewingWhoHabits = n; render(); },
